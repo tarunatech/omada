@@ -1,0 +1,269 @@
+================================================================================
+                      OMADA SALES SUITE - PROJECT SETUP GUIDE
+================================================================================
+
+This document contains all the instructions needed to set up and run the
+Omada Sales Suite project on a new machine.
+
+================================================================================
+  PREREQUISITES
+================================================================================
+
+Before starting, make sure the following software is installed:
+
+  1. Node.js (v18 or higher)
+     Download: https://nodejs.org
+
+  2. npm (comes bundled with Node.js)
+
+  3. PostgreSQL (v14 or higher)
+     Download: https://www.postgresql.org/download/
+
+  4. Git (if cloning from a repository)
+     Download: https://git-scm.com/
+
+================================================================================
+  PROJECT STRUCTURE
+================================================================================
+
+  omadayydemo/
+  ├── backend/          → Express + TypeScript API server (Port 5000)
+  │   ├── db/           → SQL schema and migration files
+  │   ├── src/          → Backend source code
+  │   ├── .env          → Environment variables (must be configured)
+  │   ├── migrate.cjs   → Database migration script
+  │   └── package.json
+  ├── frontend/         → Vite + React + TypeScript app (Port 8080)
+  │   ├── src/          → Frontend source code
+  │   └── package.json
+  └── package.json      → Root package with combined scripts
+
+================================================================================
+  STEP 1: CLONE OR COPY THE PROJECT
+================================================================================
+
+  If using Git:
+
+    git clone <your-repo-url>
+    cd omadayydemo
+
+  If using a ZIP file or folder copy, extract/place the project folder and
+  navigate into it via terminal.
+
+================================================================================
+  STEP 2: INSTALL ALL DEPENDENCIES
+================================================================================
+
+  From the root folder (omadayydemo), run:
+
+    npm install
+    npm run install:all
+
+  This will install:
+    - Root dependencies (concurrently)
+    - Frontend dependencies (React, Vite, Tailwind, Shadcn UI, etc.)
+    - Backend dependencies (Express, pg, bcryptjs, jsonwebtoken, etc.)
+
+================================================================================
+  STEP 3: SET UP POSTGRESQL DATABASE
+================================================================================
+
+  3a. Make sure PostgreSQL is running on your machine.
+
+  3b. Create the database:
+
+      Open pgAdmin or a psql terminal and run:
+
+        CREATE DATABASE omada_db;
+
+  3c. Run the SQL schema files IN THIS ORDER:
+
+      Using psql (adjust -U username and password as needed):
+
+        psql -U postgres -d omada_db -f backend/db/schema.sql
+        psql -U postgres -d omada_db -f backend/db/sequence_and_pagination.sql
+        psql -U postgres -d omada_db -f backend/db/production_optimizations.sql
+
+      Alternatively, you can open each SQL file in pgAdmin's Query Tool and
+      execute them manually in the same order.
+
+  SQL FILES EXPLAINED:
+    - schema.sql                  → Creates all tables (users, sales_records,
+                                    follow_ups, quotations, quotation_categories,
+                                    quotation_items, master_companies,
+                                    master_products)
+    - sequence_and_pagination.sql → Creates quotation number sequence and
+                                    pagination indexes
+    - production_optimizations.sql→ Adds performance indexes and ensures
+                                    the include_gst column exists
+
+  NOTE: seed.sql contains only a commented-out sample admin user. You can
+        register your first user through the app's registration page instead.
+
+================================================================================
+  STEP 4: CONFIGURE THE ENVIRONMENT FILE
+================================================================================
+
+  Create or edit the file: backend/.env
+
+  Add the following content (update values as needed for your machine):
+
+    PORT=5000
+    DB_HOST=localhost
+    DB_USER=postgres
+    DB_PASSWORD=<your-postgres-password>
+    DB_NAME=omada_db
+    DB_PORT=5432
+    JWT_SECRET=omada_secret_123
+
+  IMPORTANT:
+    - Replace <your-postgres-password> with your actual PostgreSQL password.
+    - DB_USER should match your PostgreSQL username (default is "postgres").
+    - DB_PORT is typically 5432 unless you changed it during installation.
+    - JWT_SECRET can be any random string for token signing security.
+
+================================================================================
+  STEP 5: RUN DATABASE MIGRATIONS
+================================================================================
+
+  From the root folder, run:
+
+    cd backend
+    node migrate.cjs
+    cd ..
+
+  This migration script adds additional columns (location, architect_company,
+  interior_company, structural_engineer_company) to the sales_records table
+  if they don't already exist.
+
+================================================================================
+  STEP 6: START THE APPLICATION
+================================================================================
+
+  OPTION A - Run both frontend and backend together (RECOMMENDED):
+
+    From the root folder (omadayydemo):
+
+      npm run dev
+
+    This uses "concurrently" to start both servers at once.
+
+  OPTION B - Run them separately in two terminals:
+
+    Terminal 1 (Backend):
+      cd backend
+      npm run dev
+
+    Terminal 2 (Frontend):
+      cd frontend
+      npm run dev
+
+================================================================================
+  STEP 7: ACCESS THE APPLICATION
+================================================================================
+
+  Once both servers are running:
+
+    Frontend (Web App):   http://localhost:8080
+    Backend (API Server): http://localhost:5000
+
+================================================================================
+  QUICK REFERENCE - ALL COMMANDS IN ORDER
+================================================================================
+
+  # 1. Install all dependencies
+  npm install
+  npm run install:all
+
+  # 2. Create database (run in psql or pgAdmin)
+  CREATE DATABASE omada_db;
+
+  # 3. Run SQL files (in psql)
+  psql -U postgres -d omada_db -f backend/db/schema.sql
+  psql -U postgres -d omada_db -f backend/db/sequence_and_pagination.sql
+  psql -U postgres -d omada_db -f backend/db/production_optimizations.sql
+
+  # 4. Configure backend/.env (edit DB_PASSWORD to your password)
+
+  # 5. Run migrations
+  cd backend
+  node migrate.cjs
+  cd ..
+
+  # 6. Start the application
+  npm run dev
+
+  # 7. Open in browser
+  #    http://localhost:8080
+
+================================================================================
+  AVAILABLE NPM SCRIPTS
+================================================================================
+
+  ROOT (omadayydemo/):
+    npm run dev            → Start both frontend and backend
+    npm run dev:frontend   → Start only frontend
+    npm run dev:backend    → Start only backend
+    npm run install:all    → Install deps for both frontend and backend
+
+  BACKEND (backend/):
+    npm run dev            → Start backend in development mode (nodemon)
+    npm run build          → Compile TypeScript to JavaScript
+    npm start              → Start compiled backend (production)
+
+  FRONTEND (frontend/):
+    npm run dev            → Start Vite dev server
+    npm run build          → Build for production
+    npm run preview        → Preview production build
+    npm run lint           → Run ESLint
+    npm run test           → Run tests
+
+================================================================================
+  TROUBLESHOOTING
+================================================================================
+
+  1. "ECONNREFUSED" or database connection errors:
+     → Make sure PostgreSQL is running.
+     → Verify the credentials in backend/.env match your PostgreSQL setup.
+
+  2. "relation does not exist" errors:
+     → Make sure you ran all SQL files in the correct order (Step 3).
+
+  3. Port already in use:
+     → Change PORT in backend/.env for the backend.
+     → Change the port in frontend/vite.config.ts for the frontend.
+
+  4. "command not found: psql":
+     → Add PostgreSQL's bin folder to your system PATH, or use pgAdmin
+       to run the SQL files manually.
+
+  5. Node modules issues:
+     → Delete node_modules folders and reinstall:
+       rm -rf node_modules backend/node_modules frontend/node_modules
+       npm install
+       npm run install:all
+
+================================================================================
+  TECHNOLOGY STACK
+================================================================================
+
+  Frontend:
+    - React 18 with TypeScript
+    - Vite (build tool & dev server)
+    - Tailwind CSS (styling)
+    - Shadcn UI (component library)
+    - React Router DOM (routing)
+    - TanStack React Query (data fetching)
+    - Recharts (charts & analytics)
+    - jsPDF (PDF generation)
+
+  Backend:
+    - Node.js with Express 5
+    - TypeScript
+    - PostgreSQL (database)
+    - bcryptjs (password hashing)
+    - jsonwebtoken (JWT authentication)
+
+================================================================================
+                              END OF SETUP GUIDE
+================================================================================

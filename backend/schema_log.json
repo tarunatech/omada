@@ -1,0 +1,126 @@
+[
+  {
+    "column_name": "id",
+    "data_type": "integer"
+  },
+  {
+    "column_name": "dept",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "site_name",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "firm_name",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "contractor_owner_name",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "contractor_owner_contact",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "authorized_person_name",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "customer_name",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "customer_contact",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "architect_name",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "architect_contact",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "interior_designer_name",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "interior_designer_contact",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "structural_engineer_name",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "structural_engineer_contact",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "supervisor_name",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "supervisor_contact",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "pmc_name",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "pmc_contact",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "purchase_person_name",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "purchase_person_contact",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "location",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "contact_number",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "address",
+    "data_type": "text"
+  },
+  {
+    "column_name": "notes",
+    "data_type": "text"
+  },
+  {
+    "column_name": "lat",
+    "data_type": "numeric"
+  },
+  {
+    "column_name": "lng",
+    "data_type": "numeric"
+  },
+  {
+    "column_name": "architect_company",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "interior_company",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "structural_engineer_company",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone"
+  }
+]
