@@ -350,13 +350,15 @@ const SalesPage = () => {
             </Button>
           </div>
 
-          <Button 
-            onClick={handleExportCSV}
-            variant="outline"
-            className="h-14 px-8 rounded-2xl border-slate-200 bg-white text-slate-900 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-slate-200/40 hover:scale-[1.02] active:scale-95 transition-all"
-          >
-            <FileDown className="w-5 h-5 mr-2 text-primary" /> EXPORT CSV
-          </Button>
+          {user?.role === 'Admin' && (
+            <Button 
+              onClick={handleExportCSV}
+              variant="outline"
+              className="h-14 px-8 rounded-2xl border-slate-200 bg-white text-slate-900 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-slate-200/40 hover:scale-[1.02] active:scale-95 transition-all"
+            >
+              <FileDown className="w-5 h-5 mr-2 text-primary" /> EXPORT CSV
+            </Button>
+          )}
         </div>
       </div>
 
