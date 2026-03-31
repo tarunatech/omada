@@ -11,7 +11,8 @@ export const getQuotations = async (req: Request, res: Response) => {
         const offset = (page - 1) * limit;
 
         const user = (req as any).user;
-        const targetUserId = req.query.createdBy as string;
+        const rawCreatedBy = req.query.createdBy as string;
+        const targetUserId = (rawCreatedBy === 'undefined' || isNaN(parseInt(rawCreatedBy))) ? null : parseInt(rawCreatedBy);
 
         const conditions: string[] = [];
         const params: any[] = [];
