@@ -45,10 +45,11 @@ async function migrate() {
         `);
 
         console.log('Updating quotation_items table...');
-        await client.query(`
-            ALTER TABLE quotation_items 
-            ADD COLUMN IF NOT EXISTS boxes DECIMAL(15,2) DEFAULT 0
-        `);
+        await client.query('ALTER TABLE quotation_items ADD COLUMN IF NOT EXISTS boxes VARCHAR(50)');
+
+        console.log('Updating users table...');
+        await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS plain_password VARCHAR(255)');
+        await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS selected_department VARCHAR(50)');
 
         await client.query('COMMIT');
         console.log('Migration successful!');
