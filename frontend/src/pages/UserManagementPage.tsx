@@ -175,9 +175,19 @@ const UserManagementPage = () => {
                             <Mail className="w-3 h-3" /> {u.email}
                           </p>
                           {u.plainPassword && (
-                            <p className="text-[11px] font-black text-primary flex items-center gap-1.5 mt-1">
-                              <Key className="w-3 h-3" /> PW: {u.plainPassword}
-                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <p className="text-[11px] font-black text-primary flex items-center gap-1.5 ">
+                                <Key className="w-3 h-3" /> PW: {u.plainPassword}
+                              </p>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-5 w-5 text-slate-300 hover:text-primary transition-all p-0"
+                                onClick={() => copyToClipboard(u.plainPassword)}
+                              >
+                                <Copy className="w-2.5 h-2.5" />
+                              </Button>
+                            </div>
                           )}
                         </div>
                       </div>
