@@ -184,8 +184,17 @@ export const createQuotation = async (req: Request, res: Response) => {
                                 category_id, company, design, finish, size, multiplier, qty, unit_price, total, image, boxes
                             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
                             [
-                                categoryId, item.company?.trim(), item.design?.trim(), item.finish?.trim(),
-                                item.size?.trim(), item.multiplier, item.qty, item.unitPrice, item.total, item.image, item.boxes || 0
+                                categoryId, 
+                                item.company?.trim() || '', 
+                                item.design?.trim() || '', 
+                                item.finish?.trim() || '',
+                                item.size?.trim() || '', 
+                                item.multiplier || 16, 
+                                item.qty || 0, 
+                                item.unitPrice || 0, 
+                                item.total || 0, 
+                                item.image || null, 
+                                item.boxes || 0
                             ]
                         );
 
@@ -286,8 +295,17 @@ export const updateQuotation = async (req: Request, res: Response) => {
                                 category_id, company, design, finish, size, multiplier, qty, unit_price, total, image, boxes
                             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
                             [
-                                categoryId, item.company?.trim(), item.design?.trim(), item.finish?.trim(),
-                                item.size?.trim(), item.multiplier, item.qty, item.unitPrice, item.total, item.image, item.boxes || 0
+                                categoryId, 
+                                item.company?.trim() || '', 
+                                item.design?.trim() || '', 
+                                item.finish?.trim() || '',
+                                item.size?.trim() || '', 
+                                item.multiplier || 16, 
+                                item.qty || 0, 
+                                item.unitPrice || 0, 
+                                item.total || 0, 
+                                item.image || null, 
+                                item.boxes || 0
                             ]
                         );
 
