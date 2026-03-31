@@ -150,9 +150,14 @@ export const createQuotation = async (req: Request, res: Response) => {
         const user = (req as any).user;
         // Server-side ID generation to prevent collisions
         let finalId = id;
-        if (!id || id.startsWith('Q-')) {
-            const seqResult = await client.query("SELECT nextval('quotation_number_seq') as num");
-            finalId = `Q-${seqResult.rows[0].num}`;
+        if (!id || id.startsWith('Q-') || id.startsWith('S-')) {
+            if (type === 'Sample') {
+                const seqResult = await client.query("SELECT nextval('sample_number_seq') as num");
+                finalId = `S-${seqResult.rows[0].num}`;
+            } else {
+                const seqResult = await client.query("SELECT nextval('quotation_number_seq') as num");
+                finalId = `Q-${seqResult.rows[0].num}`;
+            }
         }
 
         const insertQuotationQuery = `
