@@ -11,6 +11,7 @@ import pool from './db';
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', true);
 const PORT = process.env.PORT || 5000;
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS 

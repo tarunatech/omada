@@ -6,6 +6,7 @@
     "start": "node dist/index.js",
     "dev": "nodemon --watch src --exec ts-node src/index.ts",
     "build": "tsc",
+    "migrate": "node migrate.cjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

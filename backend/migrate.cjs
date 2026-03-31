@@ -21,12 +21,33 @@ async function migrate() {
         await client.query('BEGIN');
 
         // Add columns if they don't exist
+        console.log('Updating sales_records table...');
         await client.query(`
             ALTER TABLE sales_records 
             ADD COLUMN IF NOT EXISTS location VARCHAR(255),
             ADD COLUMN IF NOT EXISTS architect_company VARCHAR(255),
             ADD COLUMN IF NOT EXISTS interior_company VARCHAR(255),
-            ADD COLUMN IF NOT EXISTS structural_engineer_company VARCHAR(255)
+            ADD COLUMN IF NOT EXISTS structural_engineer_company VARCHAR(255),
+            ADD COLUMN IF NOT EXISTS created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+            ADD COLUMN IF NOT EXISTS another_name VARCHAR(255),
+            ADD COLUMN IF NOT EXISTS another_contact VARCHAR(255),
+            ADD COLUMN IF NOT EXISTS salesman_name VARCHAR(255)
+        `);
+
+        console.log('Updating quotations table...');
+        await client.query(`
+            ALTER TABLE quotations 
+            ADD COLUMN IF NOT EXISTS created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+            ADD COLUMN IF NOT EXISTS company_name TEXT,
+            ADD COLUMN IF NOT EXISTS include_gst BOOLEAN DEFAULT FALSE,
+            ADD COLUMN IF NOT EXISTS extra_terms TEXT,
+            ADD COLUMN IF NOT EXISTS type VARCHAR(50) DEFAULT 'Quotation'
+        `);
+
+        console.log('Updating quotation_items table...');
+        await client.query(`
+            ALTER TABLE quotation_items 
+            ADD COLUMN IF NOT EXISTS boxes DECIMAL(15,2) DEFAULT 0
         `);
 
         await client.query('COMMIT');
