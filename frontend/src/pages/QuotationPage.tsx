@@ -385,7 +385,7 @@ const QuotationPage = () => {
         };
 
         const quotationNo = data.id;
-        const dateFormatted = new Date(data.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        const dateFormatted = format(new Date(), 'dd/MM/yyyy');
 
         const totalBoxes = data.categories.reduce((acc, cat) => acc + cat.items.reduce((s, i) => s + (Number(i.qty) || 0), 0), 0);
         const totalArea = data.categories.reduce((acc, cat) => acc + cat.items.reduce((s, i) => s + (Number(i.multiplier) * Number(i.qty) || 0), 0), 0);
