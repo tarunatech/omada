@@ -468,8 +468,8 @@ const QuotationPage = () => {
                     <div style="font-size: 9px; opacity: 0.9; line-height: 1.7; font-weight: 600;">
                       • 1 to 1.5% Breakage of total boxes should be accepted by customer.<br/>
                       • Quantity will be +/-5% Tolerance<br/>
-                      • Price will be up & down if any natural resources price increase.<br/>
-                      • GST: 18% EXTRA
+                      • Price will be up & down if any natural resources price increase.
+                      ${data.includeGst ? '<br/>• GST: 18% EXTRA' : ''}
                     </div>
                   </div>
                 </td>
@@ -585,27 +585,28 @@ const QuotationPage = () => {
 
             <div style="margin-top: 35px; margin-bottom: 40px; display: flex; justify-content: flex-end; align-items: center; gap: 20px;">
               ${data.includeGst ? `
-                <div style="width: 250px; height: 110px; background: #FAF3F0; border: 1px solid #000000; border-radius: 12px; padding: 0 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; align-items: center;">
-                     <table style="width: 100%; border-collapse: collapse;">
-                         <tr>
-                             <td style="font-size: 11px; color: #475569; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; padding: 4px 0;">Basis Total</td>
-                             <td style="font-size: 11px; color: #000000; font-weight: 900; text-align: right; padding: 4px 0;">₹${Math.round(subtotal).toLocaleString('en-IN')}</td>
-                         </tr>
-                         <tr>
-                             <td style="font-size: 11px; color: #475569; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; padding: 4px 0;">CGST (9%)</td>
-                             <td style="font-size: 11px; color: #000000; font-weight: 900; text-align: right; padding: 4px 0;">₹${Math.round(cgst).toLocaleString('en-IN')}</td>
-                         </tr>
-                         <tr>
-                             <td style="font-size: 11px; color: #475569; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; padding: 4px 0;">SGST (9%)</td>
-                             <td style="font-size: 11px; color: #000000; font-weight: 900; text-align: right; padding: 4px 0;">₹${Math.round(sgst).toLocaleString('en-IN')}</td>
-                         </tr>
-                     </table>
+                <div style="display: flex; flex-direction: column; gap: 10px; justify-content: center;">
+                    <div style="width: 250px; height: 110px; background: #FAF3F0; border: 1px solid #000000; border-radius: 12px; padding: 0 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; align-items: center;">
+                         <table style="width: 100%; border-collapse: collapse;">
+                             <tr>
+                                 <td style="font-size: 11px; color: #475569; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; padding: 4px 0;">Basis Total</td>
+                                 <td style="font-size: 11px; color: #000000; font-weight: 900; text-align: right; padding: 4px 0;">₹${Math.round(subtotal).toLocaleString('en-IN')}</td>
+                             </tr>
+                             <tr>
+                                 <td style="font-size: 11px; color: #475569; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; padding: 4px 0;">CGST (9%)</td>
+                                 <td style="font-size: 11px; color: #000000; font-weight: 900; text-align: right; padding: 4px 0;">₹${Math.round(cgst).toLocaleString('en-IN')}</td>
+                             </tr>
+                             <tr>
+                                 <td style="font-size: 11px; color: #475569; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; padding: 4px 0;">SGST (9%)</td>
+                                 <td style="font-size: 11px; color: #000000; font-weight: 900; text-align: right; padding: 4px 0;">₹${Math.round(sgst).toLocaleString('en-IN')}</td>
+                             </tr>
+                         </table>
+                    </div>
+                    <div style="padding: 10px 15px; background: #FFF5F5; border: 1px solid #FED7D7; border-radius: 8px; color: #C53030; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; text-align: center;">
+                      ⚡ GST 18% Extra as per statutory norms
+                    </div>
                 </div>
-              ` : `
-                <div style="padding: 12px 20px; background: #FFF5F5; border: 1px solid #FED7D7; border-radius: 8px; color: #C53030; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
-                  ⚡ GST 18% Extra as per statutory norms
-                </div>
-              `}
+              ` : ''}
               
               <div style="width: 230px; height: 110px; background: #111111; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); border: 1.5px solid #855546; position: relative; display: flex; align-items: center; justify-content: center;">
                    <!-- Floating Header -->
