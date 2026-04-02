@@ -404,9 +404,7 @@ const OrderExportPage = () => {
            <div className="bg-[#855546] p-12 -mx-12 -mt-12 mb-12 flex justify-between items-end relative overflow-hidden">
               <div className="absolute top-0 right-0 w-96 h-96 bg-black/5 rounded-full -mr-48 -mt-48 blur-3xl pointer-events-none" />
               <div className="relative z-10">
-                <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl inline-block mb-10 border border-white/10">
-                  <img src={omadaLogo} className="h-10 brightness-0 invert" alt="OMADA" />
-                </div>
+                <img src={omadaLogo} className="h-16 mb-8 block translate-x-[-10px]" alt="OMADA" />
                 <h1 className="text-5xl font-black text-white uppercase tracking-widest leading-none">Purchase Order</h1>
               </div>
               <div className="relative z-10 text-right text-white pb-1">
@@ -418,6 +416,7 @@ const OrderExportPage = () => {
         )}
         {/* Header Info */}
         <div className="bg-white rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
+        {!isExporting && (
           <div className="p-8 sm:p-10 border-b border-slate-100 bg-slate-50/30">
             <h3 className="text-lg font-black uppercase tracking-[0.2em] text-slate-900 flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-[#855546]/10 flex items-center justify-center text-[#855546] shadow-inner">
@@ -426,6 +425,7 @@ const OrderExportPage = () => {
               Order Header Metadata
             </h3>
           </div>
+        )}
           <div className="p-8 sm:p-10 bg-slate-50/50">
             <div className="bg-white border border-slate-200 rounded-3xl p-8 flex flex-col md:flex-row justify-between items-start md:items-center relative overflow-hidden shadow-sm">
               <div className="absolute top-0 left-0 bottom-0 w-2 bg-[#855546]" />
@@ -460,31 +460,33 @@ const OrderExportPage = () => {
         <div className="space-y-12">
           {categories.map((cat) => (
             <div key={cat.id} className="bg-white rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
-              <div className="p-8 sm:px-10 py-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="w-10 h-10 rounded-xl bg-[#855546] text-white flex items-center justify-center shadow-lg shadow-[#855546]/20">
-                    <span className="font-black text-xs uppercase tracking-tighter">SEC</span>
+              {!isExporting && (
+                <div className="p-8 sm:px-10 py-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="w-10 h-10 rounded-xl bg-[#855546] text-white flex items-center justify-center shadow-lg shadow-[#855546]/20">
+                      <span className="font-black text-xs uppercase tracking-tighter">SEC</span>
+                    </div>
+                    <Input
+                      value={cat.name}
+                      onChange={e => setCategories(categories.map(c => c.id === cat.id ? { ...c, name: e.target.value } : c))}
+                      className="text-xl font-black uppercase tracking-tight border-0 bg-transparent p-0 h-auto focus-visible:ring-0 w-full max-w-[400px] disabled:opacity-100 text-slate-900"
+                      placeholder="Enter Category Heading..."
+                      disabled={view === 'view'}
+                      readOnly={isExporting}
+                    />
                   </div>
-                  <Input
-                    value={cat.name}
-                    onChange={e => setCategories(categories.map(c => c.id === cat.id ? { ...c, name: e.target.value } : c))}
-                    className="text-xl font-black uppercase tracking-tight border-0 bg-transparent p-0 h-auto focus-visible:ring-0 w-full max-w-[400px] disabled:opacity-100 text-slate-900"
-                    placeholder="Enter Category Heading..."
-                    disabled={view === 'view'}
-                    readOnly={isExporting}
-                  />
+                  {view !== 'view' && (
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" className="h-10 px-6 rounded-xl text-[#855546] border-[#855546]/20 hover:bg-[#855546]/5 font-black uppercase tracking-widest text-[10px]" onClick={() => addItem(cat.id)}>
+                        <Plus className="w-3.5 h-3.5 mr-2" /> ADD LINE ITEM
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all" onClick={() => removeCategory(cat.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
-                {!isExporting && view !== 'view' && (
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" className="h-10 px-6 rounded-xl text-[#855546] border-[#855546]/20 hover:bg-[#855546]/5 font-black uppercase tracking-widest text-[10px]" onClick={() => addItem(cat.id)}>
-                      <Plus className="w-3.5 h-3.5 mr-2" /> ADD LINE ITEM
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all" onClick={() => removeCategory(cat.id)}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
-              </div>
+              )}
 
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -566,33 +568,35 @@ const OrderExportPage = () => {
           )}
 
           {/* Category Summary */}
-          <div className="bg-[#855546] rounded-[32px] border border-[#764a3d] shadow-2xl overflow-hidden p-8 sm:p-12 text-white relative">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-[100px]" />
-            <h3 className="text-xl font-black uppercase tracking-[0.3em] text-white/40 mb-10 flex items-center gap-4">
-              <div className="w-1.5 h-6 bg-white/30 rounded-full" />
-              Consolidated Allocation Summary
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {categorySummary.map(s => (s.category && (
-                <div key={s.category} className="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-md">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">{s.category}</p>
-                  <div className="flex items-end gap-3">
-                    <p className="text-4xl font-black tracking-tighter text-white">{s.totalQty.toLocaleString()}</p>
-                    <p className="text-xs font-black uppercase tracking-widest text-white/60 mb-2">Units</p>
+          {!isExporting && (
+            <div className="bg-[#855546] rounded-[32px] border border-[#764a3d] shadow-2xl overflow-hidden p-8 sm:p-12 text-white relative">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-[100px]" />
+              <h3 className="text-xl font-black uppercase tracking-[0.3em] text-white/40 mb-10 flex items-center gap-4">
+                <div className="w-1.5 h-6 bg-white/30 rounded-full" />
+                Consolidated Allocation Summary
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {categorySummary.map(s => (s.category && (
+                  <div key={s.category} className="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-md">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">{s.category}</p>
+                    <div className="flex items-end gap-3">
+                      <p className="text-4xl font-black tracking-tighter text-white">{s.totalQty.toLocaleString()}</p>
+                      <p className="text-xs font-black uppercase tracking-widest text-white/60 mb-2">Units</p>
+                    </div>
                   </div>
-                </div>
-              )))}
-              <div className="bg-[#111111] border border-white/10 rounded-3xl p-8 shadow-xl shadow-black/40">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Grand Total Material</p>
-                <div className="flex items-end gap-3">
-                  <p className="text-4xl font-black tracking-tighter text-white">
-                    {categorySummary.reduce((sum, s) => sum + s.totalQty, 0).toLocaleString()}
-                  </p>
-                  <p className="text-xs font-black uppercase tracking-widest text-white/80 mb-2">Boxes</p>
+                )))}
+                <div className="bg-[#111111] border border-white/10 rounded-3xl p-8 shadow-xl shadow-black/40">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Grand Total Material</p>
+                  <div className="flex items-end gap-3">
+                    <p className="text-4xl font-black tracking-tighter text-white">
+                      {categorySummary.reduce((sum, s) => sum + s.totalQty, 0).toLocaleString()}
+                    </p>
+                    <p className="text-xs font-black uppercase tracking-widest text-white/80 mb-2">Boxes</p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           {isExporting && (
              <div className="bg-[#855546] p-16 -mx-12 -mb-12 mt-12 text-center relative overflow-hidden">
