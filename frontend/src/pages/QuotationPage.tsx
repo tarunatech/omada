@@ -669,6 +669,27 @@ const QuotationPage = () => {
         const saved = localStorage.getItem('omada_order_records');
         let existingRecords = saved ? JSON.parse(saved) : [];
 
+        const syncManufacturer = async (name: string) => {
+            if (!name) return;
+            try {
+                const res = await api.get('/master/companies?limit=100');
+                const companies = res.data || [];
+                const exists = companies.some((c: any) => c.name.toLowerCase() === name.toLowerCase());
+                
+                if (!exists) {
+                    await api.post('/master/companies', {
+                        name,
+                        type: 'Manufacturer',
+                        contact: '-',
+                        status: 'Active'
+                    });
+                }
+            } catch (err) {
+                console.error('Failed to sync manufacturer:', err);
+            }
+        };
+        syncManufacturer(company);
+
         // Use the provided PO Number
         const orderId = poNumber;
 

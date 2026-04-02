@@ -9,6 +9,7 @@ import { toPng } from 'html-to-image';
 import { toast } from 'sonner';
 import { globalSearch } from '@/lib/utils';
 import { CustomPagination } from '@/components/CustomPagination';
+import { api } from '@/lib/api';
 import omadaLogo from '@/assets/omada-logo.png';
 
 interface OrderItem {
@@ -34,6 +35,26 @@ interface OrderRecord {
   date: string;
   categories: OrderCategory[];
 }
+
+const syncManufacturer = async (name: string) => {
+  if (!name) return;
+  try {
+    const res = await api.get('/master/companies?limit=100');
+    const companies = res.data || [];
+    const exists = companies.some((c: any) => c.name.toLowerCase() === name.toLowerCase());
+    
+    if (!exists) {
+      await api.post('/master/companies', {
+        name,
+        type: 'Manufacturer',
+        contact: '-',
+        status: 'Active'
+      });
+    }
+  } catch (err) {
+    console.error('Failed to sync manufacturer:', err);
+  }
+};
 
 const OrderExportPage = () => {
   const [view, setView] = useState<'list' | 'form' | 'view'>('list');
@@ -213,6 +234,7 @@ const OrderExportPage = () => {
     } else {
       setRecords([newRecord, ...records]);
     }
+    syncManufacturer(supplier);
     setView('list');
     resetForm();
     toast.success('Order record saved successfully');
