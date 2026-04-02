@@ -404,7 +404,7 @@ const OrderExportPage = () => {
            <div className="bg-[#855546] p-12 -mx-12 -mt-12 mb-12 flex justify-between items-end relative overflow-hidden">
               <div className="absolute top-0 right-0 w-96 h-96 bg-black/5 rounded-full -mr-48 -mt-48 blur-3xl pointer-events-none" />
               <div className="relative z-10">
-                <img src={omadaLogo} className="h-16 mb-8 block translate-x-[-10px]" alt="OMADA" />
+                <img src={omadaLogo} className="h-10 mb-8 block" alt="OMADA" />
                 <h1 className="text-5xl font-black text-white uppercase tracking-widest leading-none">Purchase Order</h1>
               </div>
               <div className="relative z-10 text-right text-white pb-1">
