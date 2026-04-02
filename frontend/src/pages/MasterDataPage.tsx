@@ -96,36 +96,39 @@ const MasterDataPage = () => {
 
   // Auto-sync manufacturers from local PO records to DB if missing
   useEffect(() => {
-    if (orderRecords.length > 0) {
-      const syncMissing = async () => {
-        const uniqueSuppliers = Array.from(new Set(orderRecords.map(r => r.supplier)));
-        for (const s of uniqueSuppliers) {
-          if (!s || s.trim() === '-' || s.startsWith('ORD-')) continue;
-          
-          // Check if it exists in current state or if state is still loading
-          const exists = companies.some(c => c.name.toLowerCase() === s.toLowerCase());
-          
-          if (!exists) {
-            try {
-              // Double check via API to be safe against race conditions
-              await api.post('/master/companies', { 
-                name: s, 
-                type: 'Manufacturer', 
-                contact: '-',
-                status: 'Active' 
-              });
-              // Refresh full list after registration
-              fetchCompanies();
-            } catch (e) {
-              // Silently ignore if already exists (400/409)
-              console.log(`Sync skipped for ${s}: already registered or error`);
-            }
+    const syncMissing = async () => {
+      if (orderRecords.length === 0) return;
+      
+      const uniqueSuppliers = Array.from(new Set(orderRecords.map(r => r.supplier)));
+      let addedAny = false;
+
+      for (const s of uniqueSuppliers) {
+        if (!s || s.trim() === '-' || s.startsWith('ORD-')) continue;
+        
+        // Use current state to check existence
+        const exists = companies.some(c => c.name.toLowerCase() === s.toLowerCase());
+        
+        if (!exists) {
+          try {
+            await api.post('/master/companies', { 
+              name: s, 
+              type: 'Manufacturer', 
+              contact: '-',
+              status: 'Active' 
+            });
+            addedAny = true;
+          } catch (e) {
+            console.log(`Sync skipped for ${s}`);
           }
         }
-      };
-      syncMissing();
-    }
-  }, [orderRecords, companies.length]);
+      }
+      if (addedAny) fetchCompanies();
+    };
+
+    // Small delay to ensure fetchCompanies has finished first
+    const timeout = setTimeout(syncMissing, 1000);
+    return () => clearTimeout(timeout);
+  }, [orderRecords.length, companies.length]);
 
   useEffect(() => {
     fetchDesigns();
@@ -437,9 +440,14 @@ const MasterDataPage = () => {
                 <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter">Manufacturing Partners</h2>
                 <p className="text-sm text-slate-500 font-bold tracking-tight">Approved vendor list and supply chain partners</p>
               </div>
-              <Button onClick={() => { setEditingItem(null); setCompanyForm({ name: '', type: '', contact: '', status: 'Active' }); setCompanyModalOpen(true); }} className="h-12 px-8 rounded-xl bg-slate-900 text-white font-black uppercase tracking-widest text-[12px]">
-                <Plus className="w-5 h-5 mr-2" /> REGISTER PARTNER
-              </Button>
+              <div className="flex gap-4 items-center">
+                <Button variant="outline" onClick={() => window.location.reload()} className="h-12 px-6 rounded-xl border-slate-200 text-slate-600 font-bold uppercase tracking-widest text-xs">
+                  <Clock className="w-4 h-4 mr-2" /> REFRESH FROM POs
+                </Button>
+                <Button onClick={() => { setEditingItem(null); setCompanyForm({ name: '', type: '', contact: '', status: 'Active' }); setCompanyModalOpen(true); }} className="h-12 px-8 rounded-xl bg-slate-900 text-white font-black uppercase tracking-widest text-[12px]">
+                  <Plus className="w-5 h-5 mr-2" /> REGISTER PARTNER
+                </Button>
+              </div>
             </div>
 
             <div className="overflow-x-auto">
