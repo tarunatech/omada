@@ -436,7 +436,7 @@ const OrderExportPage = () => {
                     value={supplier}
                     onChange={e => setSupplier(e.target.value)}
                     placeholder="e.g. KAJARIA CERAMICS LTD."
-                    className="border-0 p-0 h-auto text-3xl font-black uppercase text-slate-900 bg-transparent focus-visible:ring-0 placeholder:text-slate-200"
+                    className={`border-0 p-0 h-auto text-3xl font-black uppercase text-slate-900 bg-transparent focus-visible:ring-0 placeholder:text-slate-200 ${isExporting ? 'text-4xl' : ''}`}
                     disabled={view === 'view'}
                   />
                   <div className="text-sm text-[#855546] font-black uppercase tracking-widest mt-1 opacity-80">
@@ -446,9 +446,8 @@ const OrderExportPage = () => {
               </div>
 
               <div className="mt-6 md:mt-0 text-left md:text-right border-t md:border-t-0 pt-6 md:pt-0 w-full md:w-auto">
-                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 mb-2">Order Status</div>
-                <div className="inline-flex items-center px-6 py-3 rounded-2xl bg-slate-100 text-slate-900 font-black uppercase tracking-[0.1em] text-sm shadow-inner transition-colors">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 mr-3 animate-pulse" />
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 mb-2">Status</div>
+                <div className="inline-flex items-center px-4 py-2 rounded-full bg-slate-100 text-black font-black uppercase tracking-tighter text-xs shadow-sm">
                   CONFIRMED
                 </div>
               </div>
@@ -493,29 +492,25 @@ const OrderExportPage = () => {
                   <thead>
                     <tr className="bg-[#855546] text-[10px] font-black uppercase tracking-[0.3em] text-white border-b border-[#764a3d] shadow-sm">
                       <th className="w-20 py-7 px-10 text-left">Sr.</th>
-                      <th className="py-7 px-10 text-left">Dimensions / Size</th>
+                      <th className="py-7 px-10 text-left">Image</th>
                       <th className="py-7 px-10 text-left">Description</th>
-                      <th className="w-56 py-7 px-10 text-right">Quantity Ordered</th>
+                      <th className="py-7 px-10 text-left">Specifications</th>
+                      <th className="w-56 py-7 px-10 text-right">Qty</th>
                       {!isExporting && <th className="w-16 py-7 px-10 text-right"></th>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {cat.items.map((item, idx) => (
                       <tr key={item.id} className="group hover:bg-slate-50/50 transition-all">
-                        <td className="py-5 px-10 text-slate-400 font-black text-sm">{idx + 1}</td>
+                        <td className="py-5 px-10 text-slate-400 font-black text-sm">{isExporting ? (idx + 1).toString().padStart(2, '0') : idx + 1}</td>
                         <td className="py-5 px-10">
-                          <Input
-                            className={`h-10 text-sm border-0 bg-transparent focus-visible:ring-1 font-black uppercase tracking-tight text-slate-800 ${isExporting ? 'p-0' : ''}`}
-                            value={item.size}
-                            onChange={e => updateItem(cat.id, item.id, 'size', e.target.value)}
-                            placeholder="e.g. 600x1200mm"
-                            disabled={view === 'view'}
-                            readOnly={isExporting}
-                          />
+                           <div className="w-20 h-14 bg-slate-100 rounded-lg border border-slate-200 flex items-center justify-center overflow-hidden">
+                              <Building2 className="w-6 h-6 text-slate-300" />
+                           </div>
                         </td>
                         <td className="py-5 px-10">
                           <Input
-                            className={`h-10 text-sm border-0 bg-transparent focus-visible:ring-1 font-black uppercase tracking-tight text-slate-800 ${isExporting ? 'p-0' : ''}`}
+                            className={`h-10 text-sm border-0 bg-transparent focus-visible:ring-1 font-black uppercase tracking-tight text-slate-800 ${isExporting ? 'p-0 text-base' : ''}`}
                             value={item.design}
                             onChange={e => updateItem(cat.id, item.id, 'design', e.target.value)}
                             placeholder="e.g. Statuario Marble"
@@ -523,18 +518,20 @@ const OrderExportPage = () => {
                             readOnly={isExporting}
                           />
                         </td>
+                        <td className="py-5 px-10">
+                          <Input
+                            className={`h-10 text-[10px] border-0 bg-transparent focus-visible:ring-1 font-black uppercase tracking-tight text-slate-500 ${isExporting ? 'p-0 text-[11px]' : ''}`}
+                            value={item.size}
+                            onChange={e => updateItem(cat.id, item.id, 'size', e.target.value)}
+                            placeholder="e.g. 600x1200mm"
+                            disabled={view === 'view'}
+                            readOnly={isExporting}
+                          />
+                        </td>
                         <td className="py-6 px-10">
-                          <div className="flex flex-col items-end">
-                            <Input
-                              type="number"
-                              className={`h-10 text-2xl font-black border-0 bg-transparent focus-visible:ring-1 text-right no-spinner text-slate-900 ${isExporting ? 'p-0 h-auto w-full' : ''}`}
-                              value={item.qty || ''}
-                              onChange={e => updateItem(cat.id, item.id, 'qty', +e.target.value)}
-                              onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                              disabled={view === 'view'}
-                              readOnly={isExporting}
-                            />
-                            {isExporting && <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">Boxes</span>}
+                          <div className="flex items-end justify-end gap-2 text-slate-900">
+                            <span className="text-2xl font-black">{item.qty || 0}</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Boxes</span>
                           </div>
                         </td>
                         {!isExporting && view !== 'view' && (
