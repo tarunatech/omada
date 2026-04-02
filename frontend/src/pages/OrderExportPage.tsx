@@ -602,7 +602,7 @@ const OrderExportPage = () => {
              <div className="bg-[#855546] p-16 mt-56 text-center relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1 bg-black/10" />
                 <p className="text-[10px] uppercase font-black tracking-[0.5em] text-white/50 mb-6">Order Summary</p>
-                <h2 className="text-4xl font-black text-white tracking-widest uppercase mb-4">
+                <h2 className="text-3xl font-bold text-white mb-4">
                   Total Material Count: {categorySummary.reduce((sum, s) => sum + s.totalQty, 0).toLocaleString()} Boxes
                 </h2>
                 <div className="flex items-center justify-center gap-4 text-[11px] font-black text-white/40 uppercase tracking-[0.3em]">
