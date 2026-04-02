@@ -399,9 +399,9 @@ const OrderExportPage = () => {
         </div>
       </div>
 
-      <div ref={exportRef} className={`space-y-10 ${isExporting ? 'bg-white p-12' : ''}`}>
+      <div ref={exportRef} className={`${isExporting ? 'bg-white w-[850px]' : 'space-y-10'}`}>
         {isExporting && (
-           <div className="bg-[#855546] p-12 -mx-12 -mt-12 mb-12 flex justify-between items-end relative overflow-hidden">
+           <div className="bg-[#855546] p-12 flex justify-between items-end relative overflow-hidden mb-6">
               <div className="absolute top-0 right-0 w-96 h-96 bg-black/5 rounded-full -mr-48 -mt-48 blur-3xl pointer-events-none" />
               <div className="relative z-10">
                 <img src={omadaLogo} className="h-10 mb-8 block" alt="OMADA" />
@@ -415,7 +415,7 @@ const OrderExportPage = () => {
            </div>
         )}
         {/* Header Info */}
-        <div className="bg-white rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
+        <div className={`bg-white ${isExporting ? 'mx-10 mb-8' : ''} rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden`}>
         {!isExporting && (
           <div className="p-8 sm:p-10 border-b border-slate-100 bg-slate-50/30">
             <h3 className="text-lg font-black uppercase tracking-[0.2em] text-slate-900 flex items-center gap-3">
@@ -457,7 +457,7 @@ const OrderExportPage = () => {
         </div>
 
         {/* Categories and Item Tables */}
-        <div className="space-y-12">
+        <div className={`${isExporting ? 'mx-10 space-y-8' : 'space-y-12'}`}>
           {categories.map((cat) => (
             <div key={cat.id} className="bg-white rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
               {!isExporting && (
@@ -599,7 +599,7 @@ const OrderExportPage = () => {
           )}
 
           {isExporting && (
-             <div className="bg-[#855546] p-16 -mx-12 -mb-12 mt-56 text-center relative overflow-hidden">
+             <div className="bg-[#855546] p-16 mt-56 text-center relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1 bg-black/10" />
                 <p className="text-[10px] uppercase font-black tracking-[0.5em] text-white/50 mb-6">Order Summary</p>
                 <h2 className="text-4xl font-black text-white tracking-widest uppercase mb-4">
