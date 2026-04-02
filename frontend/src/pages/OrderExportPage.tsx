@@ -161,59 +161,128 @@ const OrderExportPage = () => {
   };
 
   const handleExportPDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(22);
-    doc.setTextColor(133, 85, 70); // Theme Brown
-    doc.text('ORDER EXPORT', 105, 20, { align: 'center' });
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
 
-    doc.setFontSize(11);
-    doc.setTextColor(100, 116, 139);
-    doc.text(`SUPPLIER: ${supplier.toUpperCase()}`, 20, 35);
-    doc.text(`DATE: ${new Date().toLocaleDateString()}`, 160, 35);
+    // 1. HEADER (BROWN BOX)
+    doc.setFillColor(133, 85, 70); // #855546
+    doc.rect(0, 0, pageWidth, 50, 'F');
 
-    let currentY = 45;
+    // Logo
+    doc.addImage(omadaLogo, 'PNG', 20, 20, 24, 8);
+    doc.setFontSize(8);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'normal');
+    doc.text('WORLD OF LUXURY', 20, 32);
+
+    // Header Right Text
+    doc.setFontSize(7);
+    doc.text('PURCHASE ORDER', pageWidth - 20, 20, { align: 'right' });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text(editingId || 'ORD-NEW', pageWidth - 20, 26, { align: 'right' });
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    doc.text(`ISSUED: ${today.toUpperCase()}`, pageWidth - 20, 32, { align: 'right' });
+
+    // 2. PARTNER CARD (GREY CARD)
+    doc.setFillColor(248, 250, 252); // Slate 50
+    doc.setDrawColor(241, 245, 249);
+    doc.roundedRect(15, 60, pageWidth - 30, 30, 4, 4, 'FD');
+    
+    // Vertical Accent Line for card
+    doc.setDrawColor(133, 85, 70);
+    doc.setLineWidth(1.5);
+    doc.line(17, 65, 17, 85);
+
+    doc.setTextColor(100, 116, 139); // Slate 500
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.text('MANUFACTURING PARTNER', 23, 68);
+    
+    doc.setTextColor(17, 24, 39); // Gray 900
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(supplier.toUpperCase(), 23, 76);
+    
+    doc.setTextColor(133, 85, 70);
+    doc.setFontSize(8);
+    doc.text('AUTHORIZED MATERIAL SUPPLIER', 23, 83);
+
+    // 3. ITEMS TABLE
+    let currentY = 105;
 
     categories.forEach((cat) => {
-      doc.setFontSize(12);
-      doc.setTextColor(30, 41, 59);
-      doc.text(cat.name.toUpperCase(), 20, currentY + 10);
+      // Category Name
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text(cat.name.toUpperCase(), 20, currentY);
+      currentY += 5;
 
       autoTable(doc, {
-        startY: currentY + 15,
-        head: [['#', 'SIZE', 'DESIGN NAME', 'QUANTITY']],
-        body: cat.items.map((item, idx) => [idx + 1, item.size, item.design, item.qty.toLocaleString()]),
+        startY: currentY,
+        margin: { left: 15, right: 15 },
+        head: [['SR.', 'DIMENSIONS / SIZE', 'DESCRIPTION', 'QUANTITY']],
+        body: cat.items.map((item, idx) => [
+          (idx + 1).toString().padStart(2, '0'),
+          item.size.toUpperCase(),
+          item.design.toUpperCase(),
+          item.qty.toLocaleString()
+        ]),
         theme: 'grid',
-        headStyles: { fillColor: [133, 85, 70], fontStyle: 'bold' },
-        styles: { fontSize: 9, cellPadding: 3 },
-        columnStyles: { 3: { halign: 'right', fontStyle: 'bold' } }
+        headStyles: { 
+          fillColor: [133, 85, 70], 
+          textColor: [255, 255, 255], 
+          fontSize: 8, 
+          fontStyle: 'bold',
+          cellPadding: 4,
+          halign: 'left'
+        },
+        alternateRowStyles: { fillColor: [252, 252, 252] },
+        styles: { 
+          fontSize: 9, 
+          cellPadding: 4, 
+          lineColor: [241, 245, 249], 
+          lineWidth: 0.1 
+        },
+        columnStyles: { 
+          0: { cellWidth: 15, halign: 'left' },
+          3: { halign: 'right', fontStyle: 'bold' } 
+        }
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      currentY = (doc as any).lastAutoTable.finalY + 10;
+      currentY = (doc as any).lastAutoTable.finalY + 15;
+      
+      // Page break check
+      if (currentY > 240) {
+        doc.addPage();
+        currentY = 20;
+      }
     });
 
-    // Summary Table
-    if (currentY > 240) {
-      doc.addPage();
-      currentY = 20;
-    }
+    // 4. FOOTER (BROWN BOX)
+    const totalMaterials = categories.reduce((sum, cat) => 
+      sum + cat.items.reduce((cSum, i) => cSum + i.qty, 0), 0);
 
-    doc.setFontSize(13);
-    doc.setTextColor(133, 85, 70);
-    doc.text('CATEGORY-WISE SUMMARY', 20, currentY);
+    doc.setFillColor(133, 85, 70);
+    doc.rect(0, 260, pageWidth, 37, 'F');
 
-    autoTable(doc, {
-      startY: currentY + 5,
-      head: [['CATEGORY', 'TOTAL QUANTITY']],
-      body: categorySummary.map(s => [s.category, s.totalQty.toLocaleString()]),
-      theme: 'plain',
-      headStyles: { fontStyle: 'bold', textColor: [133, 85, 70], fontSize: 8 },
-      styles: { fontSize: 10, cellPadding: 2 },
-      columnStyles: { 1: { halign: 'right', fontStyle: 'bold' } },
-      margin: { left: 20 },
-    });
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text('ORDER SUMMARY', pageWidth / 2, 270, { align: 'center' });
+    
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Total Material Count: ${totalMaterials.toLocaleString()} Boxes`, pageWidth / 2, 280, { align: 'center' });
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text('OMADA HOME STUDIO   \u2022   LUXURY MATERIAL PROCUREMENT', pageWidth / 2, 288, { align: 'center' });
 
-    doc.save(`Order_Export_${party}_${new Date().getTime()}.pdf`);
+    doc.save(`${editingId || 'PO'}_${supplier}.pdf`);
     toast.success('PDF exported successfully');
   };
 
