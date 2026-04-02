@@ -716,13 +716,7 @@ const QuotationPage = () => {
         const html = `
       <div style="width: 210mm; min-height: 297mm; display: flex; flex-direction: column; font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1A1A1A; background: #000000; padding: 0; box-sizing: border-box; position: relative; overflow: hidden;">
 
-        <!-- THE PERFECT FRAME (drawn on top with 1px overbleed) -->
-        <div style="position: absolute; top: -1px; left: -1px; right: -1px; height: calc(2.5mm + 1px); background: #000000; z-index: 10000;"></div>
-        <div style="position: absolute; bottom: -1px; left: -1px; right: -1px; height: calc(2.5mm + 1px); background: #000000; z-index: 10000;"></div>
-        <div style="position: absolute; top: -1px; left: -1px; bottom: -1px; width: calc(2.5mm + 1px); background: #000000; z-index: 10000;"></div>
-        <div style="position: absolute; top: -1px; right: -1px; bottom: -1px; width: calc(2.5mm + 1px); background: #000000; z-index: 10000;"></div>
-
-        <div style="flex: 1; display: flex; flex-direction: column; padding: 2.5mm; position: relative; background: #ffffff;">
+        <div style="flex: 1; display: flex; flex-direction: column; position: relative; background: #ffffff;">
           
           <!-- LUXURY HEADER STRIP -->
           <div style="position: absolute; top: 0; left: 0; right: 0; height: 180px; background: #855546; z-index: 0;"></div>
@@ -860,13 +854,7 @@ const QuotationPage = () => {
         const html = `
       <div style="width: 210mm; min-height: 297mm; display: flex; flex-direction: column; font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1A1A1A; background: #000000; padding: 0; box-sizing: border-box; position: relative; overflow: hidden;">
 
-        <!-- THE PERFECT FRAME (drawn on top with 1px overbleed) -->
-        <div style="position: absolute; top: -1px; left: -1px; right: -1px; height: calc(2.5mm + 1px); background: #000000; z-index: 10000;"></div>
-        <div style="position: absolute; bottom: -1px; left: -1px; right: -1px; height: calc(2.5mm + 1px); background: #000000; z-index: 10000;"></div>
-        <div style="position: absolute; top: -1px; left: -1px; bottom: -1px; width: calc(2.5mm + 1px); background: #000000; z-index: 10000;"></div>
-        <div style="position: absolute; top: -1px; right: -1px; bottom: -1px; width: calc(2.5mm + 1px); background: #000000; z-index: 10000;"></div>
-        
-        <div style="flex: 1; display: flex; flex-direction: column; padding: 2.5mm; position: relative; background: #ffffff;">
+        <div style="flex: 1; display: flex; flex-direction: column; position: relative; background: #ffffff;">
           
           <div style="background: #855546; padding: 40px 60px 30px 60px; display: flex; justify-content: space-between; align-items: flex-end; position: relative;">
             <div>
