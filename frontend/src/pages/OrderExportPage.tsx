@@ -399,9 +399,9 @@ const OrderExportPage = () => {
         </div>
       </div>
 
-      <div ref={exportRef} className={`space-y-10 ${isExporting ? 'bg-white p-12 w-[1000px]' : ''}`}>
+      <div ref={exportRef} className="space-y-10">
         {isExporting && (
-           <div className="bg-[#855546] p-12 -mx-12 -mt-12 mb-12 flex justify-between items-end relative overflow-hidden">
+           <div className="bg-[#855546] p-12 -mt-10 mb-10 flex justify-between items-end relative overflow-hidden rounded-[32px] rounded-b-none">
               <div className="absolute top-0 right-0 w-96 h-96 bg-black/5 rounded-full -mr-48 -mt-48 blur-3xl pointer-events-none" />
               <div className="relative z-10">
                 <img src={omadaLogo} className="h-10 mb-8 block" alt="OMADA" />
@@ -599,7 +599,7 @@ const OrderExportPage = () => {
           )}
 
           {isExporting && (
-             <div className="bg-[#855546] p-16 -mx-12 -mb-12 mt-12 text-center relative overflow-hidden">
+             <div className="bg-[#855546] p-16 -mb-10 mt-10 text-center relative overflow-hidden rounded-[32px] rounded-t-none">
                 <div className="absolute top-0 left-0 w-full h-1 bg-black/10" />
                 <p className="text-[10px] uppercase font-black tracking-[0.5em] text-white/50 mb-6">Order Summary</p>
                 <h2 className="text-4xl font-black text-white tracking-widest uppercase mb-4">
