@@ -456,7 +456,6 @@ const MasterDataPage = () => {
                   <tr className="bg-slate-900/5 text-[12px] font-black uppercase tracking-[0.25em] text-slate-900 border-b-2 border-slate-100">
                     <th className="py-8 px-10 text-left">COMPANY IDENTITY</th>
                     <th className="py-8 px-10 text-left">CATEGORY</th>
-                    <th className="py-8 px-10 text-left">CONTACT</th>
                     <th className="py-8 px-10 text-center">STATUS</th>
                     <th className="py-8 px-10 text-right">ACTIONS</th>
                   </tr>
@@ -466,7 +465,6 @@ const MasterDataPage = () => {
                     <tr key={c.id} className="hover:bg-slate-50 transition-all duration-300">
                       <td className="py-8 px-10 text-left font-black text-slate-900 uppercase tracking-tight">{c.name}</td>
                       <td className="py-8 px-10 text-left text-slate-500 font-bold">{c.type || 'N/A'}</td>
-                      <td className="py-8 px-10 text-left text-slate-500 font-bold">{c.contact || 'N/A'}</td>
                       <td className="py-8 px-10 text-center">
                         <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${c.status === 'Active' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
                           {c.status}
@@ -477,7 +475,7 @@ const MasterDataPage = () => {
                           <Button size="icon" variant="ghost" className="h-10 w-10 text-primary hover:text-primary hover:bg-primary/5" onClick={() => { setHistoryCompany(c.name); setViewHistoryOpen(true); }} title="View Purchase Orders">
                             <List className="w-4 h-4" />
                           </Button>
-                          <Button size="icon" variant="ghost" className="h-10 w-10 text-slate-400 hover:text-slate-900" onClick={() => { setEditingItem(c); setCompanyForm({ name: c.name, type: c.type || '', contact: c.contact || '', status: c.status }); setCompanyModalOpen(true); }}>
+                          <Button size="icon" variant="ghost" className="h-10 w-10 text-slate-400 hover:text-slate-900" onClick={() => { setEditingItem(c); setCompanyForm({ name: c.name, type: c.type || '', contact: '', status: c.status }); setCompanyModalOpen(true); }}>
                             <Pencil className="w-4 h-4" />
                           </Button>
                           <Button size="icon" variant="ghost" className="h-10 w-10 text-slate-400 hover:text-red-600" onClick={() => removeCompany(c.id)}>
@@ -588,15 +586,6 @@ const MasterDataPage = () => {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Contact No</Label>
-              <Input
-                value={companyForm.contact}
-                onChange={e => setCompanyForm({ ...companyForm, contact: e.target.value })}
-                placeholder="Contact details"
-                className="h-12 bg-slate-50 border-none rounded-xl"
-              />
             </div>
           </div>
           <DialogFooter className="pt-4">
