@@ -786,8 +786,7 @@ const QuotationPage = () => {
               <thead>
                 <tr style="background: #855546;">
                   <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: center; width: 8%;">Sr.</th>
-                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 15%;">Image</th>
-                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 40%;">Description</th>
+                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 55%;">Description</th>
                   <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: right; width: 17%;">Specifications</th>
                   <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: right; width: 20%;">Qty ordered</th>
                 </tr>
@@ -796,11 +795,7 @@ const QuotationPage = () => {
                 ${items.map((it, idx) => `
                   <tr style="border-bottom: 1px solid #EEEEEE;">
                     <td style="padding: 12px 10px; text-align: center; vertical-align: middle; font-size: 11px; color: #855546; font-weight: 900;">${(idx + 1).toString().padStart(2, '0')}</td>
-                    <td style="padding: 10px 10px; vertical-align: middle;">
-                       <div style="width: 75px; height: 50px; border-radius: 4px; overflow: hidden; border: 1px solid #EEE; background: #F9F9F9;">
-                        ${it.image ? `<img src="${it.image}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<div style="width: 100%; height: 100%; background: #FAFAFA;"></div>`}
-                      </div>
-                    </td>
+
                     <td style="padding: 10px 10px; vertical-align: middle;">
                       <div style="font-size: 13px; font-weight: 900; color: #111111; text-transform: uppercase; margin-bottom: 3px;">${it.design}</div>
                       <div style="font-size: 9px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 1px;">${it.categoryName || 'General'}</div>
@@ -908,8 +903,7 @@ const QuotationPage = () => {
               <thead>
                 <tr style="background: #855546;">
                   <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: center; width: 8%;">Sr.</th>
-                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 15%;">Image</th>
-                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 40%;">Description</th>
+                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 55%;">Description</th>
                   <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: right; width: 17%;">Specifications</th>
                   <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: right; width: 20%;">Qty</th>
                 </tr>
@@ -918,11 +912,7 @@ const QuotationPage = () => {
                 ${items.map((it, idx) => `
                   <tr style="border-bottom: 1px solid #EEEEEE;">
                     <td style="padding: 20px 10px; text-align: center; font-size: 11px; color: #855546; font-weight: 900;">${(idx + 1).toString().padStart(2, '0')}</td>
-                    <td style="padding: 15px 10px; vertical-align: middle;">
-                       <div style="width: 75px; height: 50px; border-radius: 4px; overflow: hidden; border: 1px solid #EEE; background: #F9F9F9;">
-                        ${it.image ? `<img src="${it.image}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<div style="width: 100%; height: 100%; background: #FAFAFA;"></div>`}
-                      </div>
-                    </td>
+
                     <td style="padding: 15px 10px;">
                       <div style="font-size: 13px; font-weight: 900; color: #111111; text-transform: uppercase; margin-bottom: 3px;">${it.design}</div>
                     </td>
