@@ -599,7 +599,7 @@ const OrderExportPage = () => {
           )}
 
           {isExporting && (
-             <div className="bg-[#855546] p-16 -mx-12 -mb-12 mt-32 text-center relative overflow-hidden">
+             <div className="bg-[#855546] p-16 -mx-12 -mb-12 mt-56 text-center relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1 bg-black/10" />
                 <p className="text-[10px] uppercase font-black tracking-[0.5em] text-white/50 mb-6">Order Summary</p>
                 <h2 className="text-4xl font-black text-white tracking-widest uppercase mb-4">
