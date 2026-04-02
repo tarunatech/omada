@@ -1,6 +1,6 @@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Plus, Pencil, Trash2, Building2, Package, Tag, Clock, Upload, Loader2, X, Eye, Trophy, TrendingUp } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2, Building2, Package, Tag, Clock, Upload, Loader2, X, Eye, Trophy, TrendingUp, List, PackageOpen } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useState, useEffect, useRef } from 'react';
 import { api } from '@/lib/api';
@@ -42,6 +42,9 @@ const MasterDataPage = () => {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [viewingItem, setViewingItem] = useState<any>(null);
   const [selectedCompany, setSelectedCompany] = useState<string>('all');
+  const [orderRecords, setOrderRecords] = useState<any[]>([]);
+  const [viewHistoryOpen, setViewHistoryOpen] = useState(false);
+  const [historyCompany, setHistoryCompany] = useState<string>('');
 
   // Form states
   const [companyForm, setCompanyForm] = useState({ name: '', type: '', contact: '', status: 'Active' });
@@ -84,7 +87,32 @@ const MasterDataPage = () => {
 
   useEffect(() => {
     fetchCompanies();
+    // Load local PO records
+    const saved = localStorage.getItem('omada_order_records');
+    if (saved) {
+      setOrderRecords(JSON.parse(saved));
+    }
   }, []);
+
+  // Auto-sync manufacturers from local PO records to DB if missing
+  useEffect(() => {
+    if (companies.length > 0 && orderRecords.length > 0) {
+      const syncMissing = async () => {
+        const uniqueSuppliers = Array.from(new Set(orderRecords.map(r => r.supplier)));
+        for (const s of uniqueSuppliers) {
+          if (!s) continue;
+          const exists = companies.some(c => c.name.toLowerCase() === s.toLowerCase());
+          if (!exists) {
+            try {
+              await api.post('/master/companies', { name: s, type: 'Manufacturer', status: 'Active' });
+              fetchCompanies();
+            } catch (e) { console.error('Sync failed', e); }
+          }
+        }
+      };
+      syncMissing();
+    }
+  }, [orderRecords, companies.length]);
 
   useEffect(() => {
     fetchDesigns();
@@ -425,6 +453,9 @@ const MasterDataPage = () => {
                       </td>
                       <td className="py-8 px-10 text-right">
                         <div className="flex justify-end gap-2">
+                          <Button size="icon" variant="ghost" className="h-10 w-10 text-primary hover:text-primary hover:bg-primary/5" onClick={() => { setHistoryCompany(c.name); setViewHistoryOpen(true); }} title="View Purchase Orders">
+                            <List className="w-4 h-4" />
+                          </Button>
                           <Button size="icon" variant="ghost" className="h-10 w-10 text-slate-400 hover:text-slate-900" onClick={() => { setEditingItem(c); setCompanyForm({ name: c.name, type: c.type || '', contact: c.contact || '', status: c.status }); setCompanyModalOpen(true); }}>
                             <Pencil className="w-4 h-4" />
                           </Button>
@@ -441,6 +472,60 @@ const MasterDataPage = () => {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* PO History Modal */}
+      <Dialog open={viewHistoryOpen} onOpenChange={setViewHistoryOpen}>
+        <DialogContent className="max-w-4xl rounded-3xl p-0 overflow-hidden outline-none flex flex-col max-h-[85vh]">
+          <div className="bg-[#855546] px-8 py-6 flex items-center justify-between shrink-0">
+            <div>
+              <p className="text-[10px] font-black uppercase text-white/60 tracking-[0.2em] mb-1">Manufacturer Order History</p>
+              <h2 className="text-xl font-black tracking-tight text-white uppercase">{historyCompany}</h2>
+            </div>
+            <Button variant="ghost" className="h-8 w-8 p-0 text-white/50 hover:text-white" onClick={() => setViewHistoryOpen(false)}>
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+          <div className="p-8 overflow-y-auto flex-1">
+            {orderRecords.filter(r => r.supplier === historyCompany).length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {orderRecords.filter(r => r.supplier === historyCompany).map((order) => (
+                  <div key={order.id} className="p-6 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Order Ref</p>
+                        <p className="text-base font-black text-slate-900 uppercase">{order.id}</p>
+                      </div>
+                      <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-slate-900 text-white">
+                        {order.date}
+                      </span>
+                    </div>
+                    <div className="space-y-4">
+                      {order.categories.map((cat: any, i: number) => (
+                        <div key={i} className="bg-slate-50 rounded-xl p-4">
+                          <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-2">{cat.name}</p>
+                          <div className="space-y-2">
+                            {cat.items.map((item: any, j: number) => (
+                              <div key={j} className="flex justify-between items-center text-[11px] font-bold text-slate-600">
+                                <span className="uppercase">{item.design} ({item.size})</span>
+                                <span className="text-slate-900 font-black">{item.qty?.toLocaleString()} PCS</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-20 text-center">
+                <PackageOpen className="w-16 h-16 text-slate-100 mx-auto mb-4" />
+                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No purchase orders found for this partner</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Company Modal */}
       <Dialog open={companyModalOpen} onOpenChange={setCompanyModalOpen}>
