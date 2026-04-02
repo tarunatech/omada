@@ -96,17 +96,30 @@ const MasterDataPage = () => {
 
   // Auto-sync manufacturers from local PO records to DB if missing
   useEffect(() => {
-    if (companies.length > 0 && orderRecords.length > 0) {
+    if (orderRecords.length > 0) {
       const syncMissing = async () => {
         const uniqueSuppliers = Array.from(new Set(orderRecords.map(r => r.supplier)));
         for (const s of uniqueSuppliers) {
-          if (!s) continue;
+          if (!s || s.trim() === '-' || s.startsWith('ORD-')) continue;
+          
+          // Check if it exists in current state or if state is still loading
           const exists = companies.some(c => c.name.toLowerCase() === s.toLowerCase());
+          
           if (!exists) {
             try {
-              await api.post('/master/companies', { name: s, type: 'Manufacturer', status: 'Active' });
+              // Double check via API to be safe against race conditions
+              await api.post('/master/companies', { 
+                name: s, 
+                type: 'Manufacturer', 
+                contact: '-',
+                status: 'Active' 
+              });
+              // Refresh full list after registration
               fetchCompanies();
-            } catch (e) { console.error('Sync failed', e); }
+            } catch (e) {
+              // Silently ignore if already exists (400/409)
+              console.log(`Sync skipped for ${s}: already registered or error`);
+            }
           }
         }
       };
