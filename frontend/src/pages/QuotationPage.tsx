@@ -908,10 +908,10 @@ const QuotationPage = () => {
             <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
               <thead>
                 <tr style="background: #855546;">
-                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 35px;">SR.</th>
-                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 120px;">DIMENSIONS / SIZE</th>
-                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: auto;">DESCRIPTION</th>
-                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: right; width: 70px;">QUANTITY</th>
+                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 40px;">SR.</th>
+                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 140px;">DIMENSIONS / SIZE</th>
+                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left;">DESCRIPTION</th>
+                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: right; width: 80px;">QUANTITY</th>
                 </tr>
               </thead>
               <tbody>
@@ -934,7 +934,7 @@ const QuotationPage = () => {
             </table>
           </div>
 
-          <div style="padding: 40px 60px; background: #855546; color: #ffffff; text-align: center; border-radius: 0; width: 100%; box-sizing: border-box;">
+          <div style="padding: 40px 60px 40px 60px; background: #855546; color: #ffffff; text-align: center; border-radius: 0;">
              <div style="font-size: 10px; font-weight: 900; color: #ffffff; opacity: 0.6; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 10px;">Order Summary</div>
              <div style="font-size: 28px; font-weight: 900; margin-bottom: 8px;">
                Total Material Count: ${items.reduce((sum, it) => sum + Number(it.qty || 0), 0)} Boxes
