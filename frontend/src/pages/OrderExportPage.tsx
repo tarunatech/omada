@@ -103,21 +103,37 @@ const OrderExportPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const [records, setRecords] = useState<OrderRecord[]>(() => {
-    const saved = localStorage.getItem('omada_order_records');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        return [];
-      }
+  const [records, setRecords] = useState<OrderRecord[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get(`/quotations?type=OrderExport&page=${currentPage}&limit=${itemsPerPage}&search=${search}`);
+      const mapped = (res.data || []).map((r: any) => {
+        const [city, state] = (r.siteAddress || '').split(', ');
+        return {
+          ...r,
+          supplier: r.companyName,
+          party: r.customerName,
+          referParty: r.salesRef,
+          city: city || '-',
+          state: state || '-'
+        };
+      });
+      setRecords(mapped);
+      setTotalPages(res.pagination.totalPages || 1);
+    } catch (err) {
+      toast.error('Failed to fetch orders from server');
+    } finally {
+      setLoading(false);
     }
-    return [];
-  });
+  };
 
   useEffect(() => {
-    localStorage.setItem('omada_order_records', JSON.stringify(records));
-  }, [records]);
+    fetchOrders();
+  }, [search, currentPage]);
 
   const [supplier, setSupplier] = useState('');
   const [party, setParty] = useState('');
@@ -132,6 +148,10 @@ const OrderExportPage = () => {
 
   const resetForm = () => {
     setSupplier('');
+    setParty('');
+    setCity('');
+    setState('');
+    setReferParty('');
     setCategories([]);
     setEditingId(null);
   };
@@ -357,28 +377,48 @@ const OrderExportPage = () => {
     toast.success('PDF exported successfully');
   };
 
-  const handleSave = () => {
-    const newRecord: OrderRecord = {
-      id: editingId || `ORD-${6000 + records.length + Math.floor(Math.random() * 1000)}`,
-      supplier,
-      party: '-',
-      city: '-',
-      state: '-',
-      referParty: '-',
+  const handleSave = async () => {
+    const newRecord: any = {
+      id: editingId || `ORD-${Date.now()}`,
+      customerName: party || '-',
+      companyName: supplier,
+      mobile: '-',
+      salesRef: referParty || '-',
       date: new Date().toISOString().split('T')[0],
-      categories
+      grandTotal: 0,
+      categories: categories.map(c => ({
+        ...c,
+        items: c.items.map(i => ({
+            ...i,
+            total: 0,
+            multiplier: 1, // Store default for order items
+            unitPrice: 0
+        }))
+      })),
+      siteAddress: `${city || '-'}, ${state || '-'}`,
+      referenceInfo: '-',
+      status: 'Final',
+      type: 'OrderExport'
     };
 
-    if (editingId) {
-      setRecords(records.map(r => r.id === editingId ? newRecord : r));
-    } else {
-      setRecords([newRecord, ...records]);
+    try {
+        if (editingId) {
+            await api.put(`/quotations/${editingId}`, newRecord);
+            toast.success('Order record synchronized');
+        } else {
+            await api.post('/quotations', newRecord);
+            toast.success('Order record committed to server');
+        }
+        
+        await syncManufacturer(supplier);
+        await syncDesigns(categories, supplier);
+        
+        fetchOrders();
+        setView('list');
+        resetForm();
+    } catch (err) {
+        toast.error('Failed to save order to server');
     }
-    syncManufacturer(supplier);
-    syncDesigns(categories, supplier);
-    setView('list');
-    resetForm();
-    toast.success('Order record saved successfully');
   };
 
   const handleView = (record: OrderRecord) => {
@@ -403,21 +443,25 @@ const OrderExportPage = () => {
     setView('form');
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this order record?')) {
-      setRecords(records.filter(r => r.id !== id));
-      toast.success('Order record deleted');
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure you want to delete this order record? This will remove it from all computers.')) {
+      try {
+          await api.delete(`/quotations/${id}`);
+          toast.success('Order record deleted from server');
+          fetchOrders();
+      } catch (err) {
+          toast.error('Failed to delete record');
+      }
     }
   };
 
-  const filteredRecords = records.filter(r => globalSearch(r, search));
+  const filteredRecords = records; // Server handles filtering
 
   useEffect(() => {
     setCurrentPage(1);
   }, [search]);
 
-  const totalPages = Math.ceil(filteredRecords.length / itemsPerPage);
-  const paginatedRecords = filteredRecords.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const paginatedRecords = records; // Server handles pagination
 
   const totalItemCount = useMemo(() => {
     return records.reduce((acc, r) => {
