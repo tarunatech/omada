@@ -241,10 +241,11 @@ const OrderExportPage = () => {
       autoTable(doc, {
         startY: currentY,
         margin: { left: 15, right: 15 },
-        head: [['SR.', 'PHOTO', 'FINISH', 'SIZE', 'QUANTITY']],
+        head: [['SR.', 'PHOTO', 'DESIGN', 'FINISH', 'SIZE', 'QUANTITY']],
         body: cat.items.map((item, idx) => [
           (idx + 1).toString().padStart(2, '0'),
           '', // Placeholder for image
+          item.design.toUpperCase(),
           item.finish.toUpperCase(),
           item.size.toUpperCase(),
           item.qty.toLocaleString()
@@ -281,10 +282,11 @@ const OrderExportPage = () => {
         },
         columnStyles: { 
           0: { cellWidth: 10, halign: 'left' },
-          1: { cellWidth: 30, halign: 'center' },
-          2: { cellWidth: 'auto', halign: 'left' },
-          3: { cellWidth: 40, halign: 'left' },
-          4: { cellWidth: 30, halign: 'right', fontStyle: 'bold' } 
+          1: { cellWidth: 20, halign: 'center' },
+          2: { cellWidth: 'auto', fontStyle: 'bold' },
+          3: { cellWidth: 25, halign: 'left' },
+          4: { cellWidth: 25, halign: 'left' },
+          5: { cellWidth: 22, halign: 'right', fontStyle: 'bold' } 
         }
       });
 
@@ -597,7 +599,8 @@ const OrderExportPage = () => {
                   <thead>
                     <tr className="bg-[#855546] text-[9px] font-bold uppercase tracking-[0.1em] text-white">
                       <th className="w-16 py-4 px-4 text-left border border-[#764a3d] rounded-none">SR.</th>
-                      <th className="w-32 py-4 px-4 text-left border border-[#764a3d] rounded-none">PHOTO</th>
+                      <th className="w-24 py-4 px-4 text-left border border-[#764a3d] rounded-none">PHOTO</th>
+                      <th className="py-4 px-4 text-left border border-[#764a3d] rounded-none">DESIGN</th>
                       <th className="w-32 py-4 px-4 text-left border border-[#764a3d] rounded-none">FINISH</th>
                       <th className="w-32 py-4 px-4 text-left border border-[#764a3d] rounded-none">SIZE</th>
                       <th className="w-24 py-4 px-4 text-right border border-[#764a3d] rounded-none">QUANTITY</th>
@@ -648,8 +651,22 @@ const OrderExportPage = () => {
                           </div>
                         </td>
 
-                        {/* FINISH COLUMN */}
+                        {/* DESIGN COLUMN */}
                         <td className="py-3 px-4 border border-slate-200 !rounded-none">
+                          {isExporting || view === 'view' ? (
+                             <p className="text-xs font-bold text-slate-900 uppercase whitespace-normal break-words leading-tight">{item.design}</p>
+                          ) : (
+                             <Input 
+                               value={item.design} 
+                               onChange={e => updateItem(cat.id, item.id, 'design', e.target.value)}
+                               className="h-8 border-0 p-0 text-xs font-bold text-slate-900 bg-transparent focus-visible:ring-0 placeholder:text-slate-200 uppercase"
+                               placeholder="ITEM DESIGN"
+                             />
+                          )}
+                        </td>
+
+                        {/* FINISH COLUMN */}
+                        <td className="py-3 px-4 border border-slate-200 !rounded-none w-32">
                           {isExporting || view === 'view' ? (
                              <p className="text-xs font-medium text-slate-600 uppercase whitespace-normal break-words leading-relaxed">{item.finish}</p>
                           ) : (
