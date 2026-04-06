@@ -58,6 +58,44 @@ const syncManufacturer = async (name: string) => {
   }
 };
 
+const syncDesigns = async (categories: OrderCategory[], supplierName: string) => {
+  try {
+    const res = await api.get('/master/products?limit=1000');
+    const existing = res.data || [];
+    
+    for (const cat of categories) {
+      for (const item of cat.items) {
+        if (!item.design) continue;
+        
+        const match = existing.find((p: any) => 
+          p.design.trim().toLowerCase() === item.design.trim().toLowerCase()
+        );
+
+        if (!match) {
+          // Auto-register new design with all available details
+          await api.post('/master/products', {
+            design: item.design.trim(),
+            company: supplierName || '-',
+            finish: item.finish || '-',
+            size: item.size || '-',
+            image: item.image || null,
+            status: 'Active'
+          });
+          console.log(`Auto-registered new design: ${item.design}`);
+        } else if (!match.image && item.image) {
+          // If design exists but has NO image, update it with the new image
+          await api.patch(`/master/products/${match.id}`, {
+            image: item.image
+          });
+          console.log(`Updated existing design with image: ${item.design}`);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Failed to sync designs:', err);
+  }
+};
+
 const OrderExportPage = () => {
   const [view, setView] = useState<'list' | 'form' | 'view'>('list');
   const [search, setSearch] = useState('');
@@ -337,6 +375,7 @@ const OrderExportPage = () => {
       setRecords([newRecord, ...records]);
     }
     syncManufacturer(supplier);
+    syncDesigns(categories, supplier);
     setView('list');
     resetForm();
     toast.success('Order record saved successfully');

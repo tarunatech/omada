@@ -71,6 +71,64 @@ const getSizeMultiplierOptions = (size: string): number[] => {
     return [15.5, 16];
 };
 
+const syncManufacturer = async (name: string) => {
+    if (!name || name === '-') return;
+    try {
+        const res = await api.get('/master/companies?limit=100');
+        const companies = res.data || [];
+        const exists = companies.some((c: any) => c.name.toLowerCase().trim() === name.toLowerCase().trim());
+        
+        if (!exists) {
+            await api.post('/master/companies', {
+                name: name.trim(),
+                type: 'Manufacturer',
+                contact: '-',
+                status: 'Active'
+            });
+        }
+    } catch (err) {
+        console.error('Failed to sync manufacturer:', err);
+    }
+};
+
+const syncDesigns = async (categories: Category[]) => {
+    try {
+        const res = await api.get('/master/products?limit=1000');
+        const existing = res.data || [];
+        
+        for (const cat of categories) {
+            for (const item of cat.items) {
+                if (!item.design) continue;
+                
+                const match = existing.find((p: any) => 
+                    p.design.trim().toLowerCase() === item.design.trim().toLowerCase()
+                );
+
+                if (!match) {
+                    await api.post('/master/products', {
+                        design: item.design.trim(),
+                        company: item.company || '-',
+                        finish: item.finish || '-',
+                        size: item.size || '-',
+                        image: item.image || null,
+                        status: 'Active'
+                    });
+                } else if (!match.image && item.image) {
+                    await api.patch(`/master/products/${match.id}`, {
+                        image: item.image
+                    });
+                }
+                
+                if (item.company) {
+                    await syncManufacturer(item.company);
+                }
+            }
+        }
+    } catch (err) {
+        console.error('Failed to sync designs:', err);
+    }
+};
+
 const QuotationPage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const filterUserId = searchParams.get('userId');
@@ -250,6 +308,7 @@ const QuotationPage = () => {
             }
 
             fetchQuotations();
+            syncDesigns(categories);
             fetchMasterData();
             setView('list');
             resetForm();
