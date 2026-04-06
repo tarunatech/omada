@@ -600,10 +600,11 @@ const OrderExportPage = () => {
                     <tr className="bg-[#855546] text-[9px] font-bold uppercase tracking-[0.1em] text-white">
                       <th className="w-16 py-4 px-4 text-left border border-[#764a3d] rounded-none">SR.</th>
                       <th className="w-24 py-4 px-4 text-left border border-[#764a3d] rounded-none">PHOTO</th>
-                      <th className="w-64 py-4 px-4 text-left border border-[#764a3d] rounded-none">DESIGN</th>
+                      <th className="py-4 px-4 text-left border border-[#764a3d] rounded-none">DESIGN</th>
                       <th className="w-32 py-4 px-4 text-left border border-[#764a3d] rounded-none">FINISH</th>
                       <th className="w-32 py-4 px-4 text-left border border-[#764a3d] rounded-none">SIZE</th>
                       <th className="w-24 py-4 px-4 text-right border border-[#764a3d] rounded-none">QUANTITY</th>
+                      {!isExporting && view !== 'view' && <th className="w-16 py-4 px-4 text-right border border-[#764a3d] rounded-none"></th>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -651,8 +652,8 @@ const OrderExportPage = () => {
                           </div>
                         </td>
 
-                        {/* DESIGN COLUMN */}
-                        <td className="py-3 px-4 border border-slate-200 !rounded-none w-64">
+                        {/* DESIGN COLUMN - Expanding column */}
+                        <td className="py-3 px-4 border border-slate-200 !rounded-none">
                           {isExporting || view === 'view' ? (
                              <p className="text-xs font-bold text-slate-900 uppercase whitespace-normal break-words leading-tight">{item.design}</p>
                           ) : (
@@ -709,7 +710,7 @@ const OrderExportPage = () => {
                           )}
                         </td>
                         {!isExporting && view !== 'view' && (
-                          <td className="py-3 px-4 text-right border border-slate-200">
+                          <td className="py-3 px-4 text-right border border-slate-200 w-16">
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-300 hover:text-red-500" onClick={() => removeItem(cat.id, item.id)}>
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -719,7 +720,7 @@ const OrderExportPage = () => {
                     ))}
                     {!isExporting && view !== 'view' && (
                       <tr>
-                        <td colSpan={5} className="p-0">
+                        <td colSpan={7} className="p-0">
                            <Button 
                             variant="ghost" 
                             className="w-full h-10 rounded-none border-t border-slate-100 text-primary hover:bg-primary/5 font-bold uppercase tracking-widest text-[9px] flex items-center justify-center gap-2"
