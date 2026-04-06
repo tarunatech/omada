@@ -283,10 +283,10 @@ const OrderExportPage = () => {
         columnStyles: { 
           0: { cellWidth: 10, halign: 'left' },
           1: { cellWidth: 20, halign: 'center' },
-          2: { cellWidth: 'auto', fontStyle: 'bold' },
+          2: { cellWidth: 45, fontStyle: 'bold', halign: 'left' },
           3: { cellWidth: 25, halign: 'left' },
           4: { cellWidth: 25, halign: 'left' },
-          5: { cellWidth: 22, halign: 'right', fontStyle: 'bold' } 
+          5: { cellWidth: 20, halign: 'right', fontStyle: 'bold' } 
         }
       });
 
@@ -600,7 +600,7 @@ const OrderExportPage = () => {
                     <tr className="bg-[#855546] text-[9px] font-bold uppercase tracking-[0.1em] text-white">
                       <th className="w-16 py-4 px-4 text-left border border-[#764a3d] rounded-none">SR.</th>
                       <th className="w-24 py-4 px-4 text-left border border-[#764a3d] rounded-none">PHOTO</th>
-                      <th className="py-4 px-4 text-left border border-[#764a3d] rounded-none">DESIGN</th>
+                      <th className="w-64 py-4 px-4 text-left border border-[#764a3d] rounded-none">DESIGN</th>
                       <th className="w-32 py-4 px-4 text-left border border-[#764a3d] rounded-none">FINISH</th>
                       <th className="w-32 py-4 px-4 text-left border border-[#764a3d] rounded-none">SIZE</th>
                       <th className="w-24 py-4 px-4 text-right border border-[#764a3d] rounded-none">QUANTITY</th>
@@ -652,7 +652,7 @@ const OrderExportPage = () => {
                         </td>
 
                         {/* DESIGN COLUMN */}
-                        <td className="py-3 px-4 border border-slate-200 !rounded-none">
+                        <td className="py-3 px-4 border border-slate-200 !rounded-none w-64">
                           {isExporting || view === 'view' ? (
                              <p className="text-xs font-bold text-slate-900 uppercase whitespace-normal break-words leading-tight">{item.design}</p>
                           ) : (
