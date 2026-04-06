@@ -529,15 +529,15 @@ const OrderExportPage = () => {
 
       <div ref={exportRef} className={`${isExporting ? 'bg-white w-[850px] !p-0 !m-0 flex flex-col overflow-hidden' : 'space-y-10'}`}>
         {isExporting && (
-           <div className="bg-[#855546] w-full p-10 flex justify-between items-start mb-10 border-0">
-              <div className="flex flex-col">
-                <img src={omadaLogo} className="h-10 mb-2 block" alt="OMADA" />
-                <p className="text-[10px] uppercase font-bold text-white tracking-[0.2em]">World of Luxury</p>
+           <div className="bg-[#855546] w-full p-12 flex justify-between items-start mb-12 border-0">
+              <div className="flex flex-col gap-3">
+                <img src={omadaLogo} className="h-12 mb-1 block" alt="OMADA" />
+                <p className="text-[10px] uppercase font-bold text-white tracking-[0.3em] opacity-90">World of Luxury</p>
               </div>
-              <div className="text-right text-white">
-                <p className="text-[9px] uppercase font-bold tracking-[0.3em] mb-1 opacity-80">Purchase Order</p>
-                <p className="text-2xl font-black mb-1">{editingId || 'NEW'}</p>
-                <p className="text-[9px] font-bold opacity-70 uppercase tracking-widest">
+              <div className="text-right text-white flex flex-col items-end gap-1">
+                <p className="text-[10px] uppercase font-bold tracking-[0.4em] mb-2 opacity-80">Purchase Order</p>
+                <div className="text-4xl font-black tracking-tighter mb-2">{editingId || 'NEW-ORDER'}</div>
+                <p className="text-[11px] font-bold opacity-80 uppercase tracking-[0.15em] bg-white/10 px-3 py-1 rounded-full">
                   Issued: {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                 </p>
               </div>
