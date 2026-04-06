@@ -155,7 +155,7 @@ export const createQuotation = async (req: Request, res: Response) => {
                 const seqResult = await client.query("SELECT nextval('sample_number_seq') as num");
                 finalId = `S-${seqResult.rows[0].num}`;
             } else if (type === 'OrderExport') {
-                const seqResult = await client.query("SELECT nextval('quotation_number_seq') as num"); // Using same sequence for global numbering
+                const seqResult = await client.query("SELECT nextval('order_number_seq') as num"); 
                 finalId = `ORD-${seqResult.rows[0].num}`;
             } else {
                 const seqResult = await client.query("SELECT nextval('quotation_number_seq') as num");
