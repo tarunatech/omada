@@ -283,7 +283,7 @@ const OrderExportPage = () => {
         columnStyles: { 
           0: { cellWidth: 10, halign: 'left' },
           1: { cellWidth: 20, halign: 'center' },
-          2: { cellWidth: 45, fontStyle: 'bold', halign: 'left' },
+          2: { cellWidth: 'auto', fontStyle: 'bold', halign: 'left' },
           3: { cellWidth: 25, halign: 'left' },
           4: { cellWidth: 25, halign: 'left' },
           5: { cellWidth: 20, halign: 'right', fontStyle: 'bold' } 
