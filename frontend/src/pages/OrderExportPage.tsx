@@ -379,7 +379,7 @@ const OrderExportPage = () => {
 
   const handleSave = async () => {
     const newRecord: any = {
-      id: editingId || `ORD-${Date.now()}`,
+      id: editingId || '', // Backend handles ID if empty
       customerName: party || '-',
       companyName: supplier,
       mobile: '-',
