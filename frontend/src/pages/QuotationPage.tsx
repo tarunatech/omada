@@ -735,110 +735,83 @@ const QuotationPage = () => {
         const dateFormatted = new Date().toLocaleDateString('en-GB');
 
         const html = `
-      <div style="width: 210mm; min-height: 297mm; display: flex; flex-direction: column; font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1A1A1A; background: #000000; padding: 0; box-sizing: border-box; position: relative; overflow: hidden;">
-
-        <div style="flex: 1; display: flex; flex-direction: column; position: relative; background: #ffffff;">
-          
-          <!-- LUXURY HEADER STRIP -->
-          <div style="position: absolute; top: 0; left: 0; right: 0; height: 180px; background: #855546; z-index: 0;"></div>
-          <div style="position: absolute; top: 0; right: 0; width: 300px; height: 180px; background: #000000; opacity: 0.1; z-index: 1;"></div>
-
-          <div style="position: relative; z-index: 3; flex: 1; display: flex; flex-direction: column; background: #ffffff;">
-          
-          <div style="padding: 30px 60px 20px 70px; display: flex; justify-content: space-between; align-items: flex-end;">
-            <div>
-               <div style="padding: 5px; display: inline-block; margin-bottom: 25px;">
-                <img src="${omadaLogo}" style="height: 40px; width: auto; max-width: 220px; display: block; filter: brightness(0) invert(1);" />
-              </div>
-              <h1 style="font-size: 32px; font-weight: 900; color: #ffffff; margin: 0; letter-spacing: 2px; text-transform: uppercase;">Purchase Order</h1>
+      <div style="width: 210mm; min-height: 297mm; display: flex; flex-direction: column; font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1A1A1A; background: #ffffff; padding: 0; box-sizing: border-box; position: relative; overflow: hidden;">
+        
+        <!-- BRANDED HEADER -->
+        <div style="background: #855546; padding: 45px 60px 35px 60px; display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+             <div style="margin-bottom: 25px;">
+              <img src="${omadaLogo}" style="height: 42px; width: auto; display: block; filter: brightness(0) invert(1);" />
             </div>
-
-            <div style="text-align: right; color: #ffffff;">
-              <div style="font-size: 9px; font-weight: 900; color: #ffffff; opacity: 0.8; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 4px;">Order Reference</div>
-              <div style="font-size: 20px; font-weight: 900; letter-spacing: -0.5px;">${poNumber}</div>
-              <div style="font-size: 11px; opacity: 0.6; margin-top: 5px;">${dateFormatted}</div>
-            </div>
+            <h1 style="font-size: 38px; font-weight: 900; color: #ffffff; margin: 0; letter-spacing: 2px; text-transform: uppercase; line-height: 1;">Purchase Order</h1>
           </div>
 
-          <div style="padding: 15px 60px 20px 70px;">
-            <div style="background: #FAFAFA; border: 1px solid #EEEEEE; border-radius: 8px; padding: 25px; display: flex; justify-content: space-between; align-items: center; position: relative; overflow: hidden;">
-              <div style="position: absolute; top: 0; left: 0; bottom: 0; width: 4px; background: #000000;"></div>
-              <div>
-                <div style="font-size: 9px; font-weight: 900; color: #888; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px;">Manufacturing Partner</div>
-                <div style="font-size: 18px; font-weight: 950; color: #111111; text-transform: uppercase;">${company}</div>
-                <div style="font-size: 11px; color: #855546; font-weight: 750; margin-top: 4px;">Authorized Material Supplier</div>
-              </div>
-              <div style="text-align: right;">
-                <div style="font-size: 9px; font-weight: 900; color: #BBB; text-transform: uppercase; letter-spacing: 2px;">Status</div>
-                <div style="font-size: 13px; font-weight: 900; color: #000; margin-top: 4px; background: #EEE; padding: 4px 12px; border-radius: 20px;">CONFIRMED</div>
-              </div>
-            </div>
+          <div style="text-align: right; color: #ffffff;">
+            <div style="font-size: 10px; font-weight: 900; opacity: 0.8; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 6px;">Order Reference</div>
+            <div style="font-size: 24px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 4px;">${poNumber}</div>
+            <div style="font-size: 12px; opacity: 0.7; font-weight: 700;">${dateFormatted}</div>
           </div>
-
-          <!-- MOVED DISPATCH DETAILS -->
-          <div style="padding: 0 60px 20px 70px;">
-            <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 12px 20px; color: #ffffff;">
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                  <td style="width: 60%; vertical-align: top; padding-right: 20px; border-right: 1px solid rgba(255,255,255,0.2);">
-                    <div style="font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Dispatch Protection</div>
-                    <div style="font-size: 8px; opacity: 0.85; line-height: 1.4;">
-                      • MADE IN INDIA mark visible on cartons • Tech breakage tolerance 1.5%<br/>
-                      • Material should match approved batch shade sample
-                    </div>
-                  </td>
-                  <td style="width: 40%; vertical-align: middle; text-align: right; padding-left: 20px;">
-                     <div style="font-size: 11px; font-weight: 950; color: #ffffff; text-transform: uppercase;">Omada Home Studio</div>
-                     <div style="font-size: 8px; opacity: 0.8; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;">Procurement Division</div>
-                  </td>
-                </tr>
-              </table>
-            </div>
-          </div>
-
-          <div style="padding: 0 60px 30px 70px; flex: 1;">
-            <table style="width: 100%; border-collapse: collapse;">
-              <thead>
-                <tr style="background: #855546;">
-                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 40px;">SR.</th>
-                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 140px;">DIMENSIONS / SIZE</th>
-                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left;">DESCRIPTION</th>
-                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: right; width: 80px;">QUANTITY</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${items.map((it, idx) => `
-                  <tr style="border-bottom: 1px solid #EEEEEE;">
-                    <td style="padding: 12px 10px; text-align: left; vertical-align: middle; font-size: 11px; color: #888; font-weight: 900;">${(idx + 1).toString().padStart(2, '0')}</td>
-
-                    <td style="padding: 15px 10px; text-align: left; word-wrap: break-word; white-space: normal;">
-                      <div style="font-size: 11px; font-weight: 800; color: #666; line-height: 1.4;">${it.size}</div>
-                      <div style="font-size: 9px; color: #855546; font-weight: 700; text-transform: uppercase; margin-top: 2px;">${it.finish || ''}</div>
-                    </td>
-                    <td style="padding: 15px 10px; text-align: left; word-wrap: break-word; white-space: normal;">
-                      <div style="font-size: 13px; font-weight: 900; color: #111111; text-transform: uppercase; line-height: 1.4;">${it.design}</div>
-                    </td>
-                    <td style="padding: 10px 10px; text-align: right; vertical-align: middle;">
-                      <span style="font-size: 18px; font-weight: 950; color: #000000;">${it.multiplier === 1 ? (it.boxes || 0) : it.qty}</span>
-                    </td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-
-            <div style="margin-top: 50px; padding: 40px; background: #855546; border-radius: 0; text-align: center; color: #ffffff;">
-                <div style="font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 10px; opacity: 0.6;">Order Summary</div>
-                <div style="font-size: 28px; font-weight: 900; margin-bottom: 8px;">
-                  Total Material Count: ${items.reduce((sum, it) => sum + Number((it.multiplier === 1 ? it.boxes : it.qty) || 0), 0)} Boxes
-                </div>
-                <div style="font-size: 10px; font-weight: 800; opacity: 0.4; letter-spacing: 2px;">OMADA HOME STUDIO • LUXURY MATERIAL PROCUREMENT</div>
-            </div>
-          </div>
-
-          <div style="height: 10px; background: #000; width: 100%;"></div>
         </div>
+
+        <!-- VENDOR CARD -->
+        <div style="padding: 25px 60px 25px 60px;">
+          <div style="background: #FAFAFA; border: 1px solid #EEEEEE; padding: 30px; display: flex; justify-content: space-between; align-items: center; position: relative;">
+            <div style="position: absolute; top: 0; left: 0; bottom: 0; width: 5px; background: #855546;"></div>
+            <div>
+              <div style="font-size: 10px; font-weight: 900; color: #888; text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 10px;">Manufacturing Partner</div>
+              <div style="font-size: 20px; font-weight: 950; color: #111111; text-transform: uppercase; letter-spacing: -0.5px;">${company}</div>
+              <div style="font-size: 12px; color: #855546; font-weight: 800; margin-top: 5px;">Authorized Material Supplier</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 10px; font-weight: 900; color: #CCC; text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 6px;">Status</div>
+              <div style="font-size: 11px; font-weight: 900; color: #000; border: 1.5px solid #DDD; padding: 7px 18px; background: #FFF; letter-spacing: 1px;">CONFIRMED</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ITEMS TABLE -->
+        <div style="padding: 0 60px 40px 60px; flex: 1;">
+          <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+            <thead>
+              <tr style="background: #855546;">
+                <th style="padding: 18px 15px; color: #ffffff; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 50px;">SR.</th>
+                <th style="padding: 18px 15px; color: #ffffff; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 160px;">DIMENSIONS / SIZE</th>
+                <th style="padding: 18px 15px; color: #ffffff; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left;">DESCRIPTION</th>
+                <th style="padding: 18px 15px; color: #ffffff; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: right; width: 100px;">QUANTITY</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map((it, idx) => `
+                <tr style="border-bottom: 1px solid #EEEEEE;">
+                  <td style="padding: 20px 15px; text-align: left; font-size: 12px; color: #999; font-weight: 900; vertical-align: middle;">${(idx + 1).toString().padStart(2, '0')}</td>
+                  <td style="padding: 20px 15px; text-align: left; vertical-align: middle;">
+                    <div style="font-size: 12px; font-weight: 800; color: #555; line-height: 1.4;">${it.size}</div>
+                    <div style="font-size: 10px; color: #855546; font-weight: 800; text-transform: uppercase; margin-top: 4px;">${it.finish || ''}</div>
+                  </td>
+                  <td style="padding: 20px 15px; text-align: left; vertical-align: middle;">
+                    <div style="font-size: 14px; font-weight: 900; color: #111111; text-transform: uppercase; line-height: 1.3; letter-spacing: -0.2px;">${it.design}</div>
+                  </td>
+                  <td style="padding: 20px 15px; text-align: right; font-weight: 950; font-size: 20px; color: #000; vertical-align: middle;">
+                    ${it.qty}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- BRANDED FOOTER -->
+        <div style="background: #855546; padding: 50px 60px; color: #ffffff; text-align: center;">
+           <div style="font-size: 11px; font-weight: 900; color: #ffffff; opacity: 0.7; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 12px;">Order Summary</div>
+           <div style="font-size: 32px; font-weight: 900; margin-bottom: 10px; letter-spacing: -0.5px;">
+             Total Material Count: ${items.reduce((sum, it) => sum + Number(it.qty || 0), 0)} Boxes
+           </div>
+           <div style="font-size: 11px; opacity: 0.5; margin-top: 15px; text-transform: uppercase; letter-spacing: 2.5px; font-weight: 800;">
+             Omada Home Studio • Luxury Material Procurement
+           </div>
+        </div>
+
       </div>
-    </div>
     `;
 
         try {
@@ -870,80 +843,82 @@ const QuotationPage = () => {
         const dateFormatted = new Date().toLocaleDateString('en-GB');
 
         const html = `
-      <div style="width: 210mm; min-height: 297mm; display: flex; flex-direction: column; font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1A1A1A; background: #000000; padding: 0; box-sizing: border-box; position: relative; overflow: hidden;">
-
-        <div style="flex: 1; display: flex; flex-direction: column; position: relative; background: #ffffff;">
-          
-          <div style="background: #855546; padding: 40px 60px 30px 60px; display: flex; justify-content: space-between; align-items: flex-end; position: relative;">
-            <div>
-               <div style="padding: 5px; display: inline-block; margin-bottom: 25px;">
-                <img src="${omadaLogo}" style="height: 40px; width: auto; max-width: 220px; display: block; filter: brightness(0) invert(1);" />
-              </div>
-              <h1 style="font-size: 32px; font-weight: 900; color: #ffffff; margin: 0; letter-spacing: 2px; text-transform: uppercase;">Purchase Order</h1>
+      <div style="width: 210mm; min-height: 297mm; display: flex; flex-direction: column; font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1A1A1A; background: #ffffff; padding: 0; box-sizing: border-box; position: relative; overflow: hidden;">
+        
+        <!-- BRANDED HEADER -->
+        <div style="background: #855546; padding: 45px 60px 35px 60px; display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+             <div style="margin-bottom: 25px;">
+              <img src="${omadaLogo}" style="height: 42px; width: auto; display: block; filter: brightness(0) invert(1);" />
             </div>
-
-            <div style="text-align: right; color: #ffffff;">
-              <div style="font-size: 9px; font-weight: 900; color: #ffffff; opacity: 0.8; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 4px;">Order Reference</div>
-              <div style="font-size: 20px; font-weight: 900; letter-spacing: -0.5px;">${poNumber}</div>
-              <div style="font-size: 11px; opacity: 0.6; margin-top: 5px;">${dateFormatted}</div>
-            </div>
+            <h1 style="font-size: 38px; font-weight: 900; color: #ffffff; margin: 0; letter-spacing: 2px; text-transform: uppercase; line-height: 1;">Purchase Order</h1>
           </div>
 
-          <div style="padding: 20px 60px 30px 60px;">
-            <div style="background: #FAFAFA; border: 1px solid #EEEEEE; border-radius: 0; padding: 25px; display: flex; justify-content: space-between; align-items: center; position: relative;">
-              <div style="position: absolute; top: 0; left: 0; bottom: 0; width: 4px; background: #855546;"></div>
-              <div>
-                <div style="font-size: 9px; font-weight: 900; color: #888; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px;">Manufacturing Partner</div>
-                <div style="font-size: 18px; font-weight: 950; color: #111111; text-transform: uppercase;">${company}</div>
-                <div style="font-size: 11px; color: #855546; font-weight: 750; margin-top: 4px;">Authorized Material Supplier</div>
-              </div>
-              <div style="text-align: right;">
-                <div style="font-size: 9px; font-weight: 900; color: #BBB; text-transform: uppercase; letter-spacing: 2px;">Status</div>
-                <div style="font-size: 10px; font-weight: 900; color: #000; margin-top: 4px; border: 1px solid #DDD; padding: 6px 15px; border-radius: 0; background: #FFF;">CONFIRMED</div>
-              </div>
-            </div>
-          </div>
-
-          <div style="padding: 0 60px 40px 60px; flex: 1;">
-            <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
-              <thead>
-                <tr style="background: #855546;">
-                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 40px;">SR.</th>
-                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 140px;">DIMENSIONS / SIZE</th>
-                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left;">DESCRIPTION</th>
-                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: right; width: 80px;">QUANTITY</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${items.map((it, idx) => `
-                  <tr style="border-bottom: 1px solid #EEEEEE;">
-                    <td style="padding: 15px 10px; text-align: left; font-size: 11px; color: #888; font-weight: 900;">${(idx + 1).toString().padStart(2, '0')}</td>
-                    <td style="padding: 15px 10px; text-align: left; word-wrap: break-word; white-space: normal;">
-                      <div style="font-size: 11px; font-weight: 800; color: #666; line-height: 1.4;">${it.size}</div>
-                      <div style="font-size: 9px; color: #855546; font-weight: 700; text-transform: uppercase; margin-top: 2px;">${it.finish || ''}</div>
-                    </td>
-                    <td style="padding: 15px 10px; text-align: left; word-wrap: break-word; white-space: normal;">
-                      <div style="font-size: 12px; font-weight: 900; color: #111111; text-transform: uppercase; line-height: 1.4;">${it.design}</div>
-                    </td>
-                    <td style="padding: 15px 10px; text-align: right; font-weight: 950; font-size: 16px; color: #000;">
-                      ${it.qty}
-                    </td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-
-          <div style="padding: 40px 60px 40px 60px; background: #855546; color: #ffffff; text-align: center; border-radius: 0;">
-             <div style="font-size: 10px; font-weight: 900; color: #ffffff; opacity: 0.6; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 10px;">Order Summary</div>
-             <div style="font-size: 28px; font-weight: 900; margin-bottom: 8px;">
-               Total Material Count: ${items.reduce((sum, it) => sum + Number(it.qty || 0), 0)} Boxes
-             </div>
-             <div style="font-size: 10px; opacity: 0.4; margin-top: 10px; text-transform: uppercase; letter-spacing: 2px; font-weight: 800;">
-               Omada Home Studio • Luxury Material Procurement
-             </div>
+          <div style="text-align: right; color: #ffffff;">
+            <div style="font-size: 10px; font-weight: 900; opacity: 0.8; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 6px;">Order Reference</div>
+            <div style="font-size: 24px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 4px;">${poNumber}</div>
+            <div style="font-size: 12px; opacity: 0.7; font-weight: 700;">${dateFormatted}</div>
           </div>
         </div>
+
+        <!-- VENDOR CARD -->
+        <div style="padding: 25px 60px 25px 60px;">
+          <div style="background: #FAFAFA; border: 1px solid #EEEEEE; padding: 30px; display: flex; justify-content: space-between; align-items: center; position: relative;">
+            <div style="position: absolute; top: 0; left: 0; bottom: 0; width: 5px; background: #855546;"></div>
+            <div>
+              <div style="font-size: 10px; font-weight: 900; color: #888; text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 10px;">Manufacturing Partner</div>
+              <div style="font-size: 20px; font-weight: 950; color: #111111; text-transform: uppercase; letter-spacing: -0.5px;">${company}</div>
+              <div style="font-size: 12px; color: #855546; font-weight: 800; margin-top: 5px;">Authorized Material Supplier</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 10px; font-weight: 900; color: #CCC; text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 6px;">Status</div>
+              <div style="font-size: 11px; font-weight: 900; color: #000; border: 1.5px solid #DDD; padding: 7px 18px; background: #FFF; letter-spacing: 1px;">CONFIRMED</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ITEMS TABLE -->
+        <div style="padding: 0 60px 40px 60px; flex: 1;">
+          <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+            <thead>
+              <tr style="background: #855546;">
+                <th style="padding: 18px 15px; color: #ffffff; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 50px;">SR.</th>
+                <th style="padding: 18px 15px; color: #ffffff; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 160px;">DIMENSIONS / SIZE</th>
+                <th style="padding: 18px 15px; color: #ffffff; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left;">DESCRIPTION</th>
+                <th style="padding: 18px 15px; color: #ffffff; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: right; width: 100px;">QUANTITY</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map((it, idx) => `
+                <tr style="border-bottom: 1px solid #EEEEEE;">
+                  <td style="padding: 20px 15px; text-align: left; font-size: 12px; color: #999; font-weight: 900; vertical-align: middle;">${(idx + 1).toString().padStart(2, '0')}</td>
+                  <td style="padding: 20px 15px; text-align: left; vertical-align: middle;">
+                    <div style="font-size: 12px; font-weight: 800; color: #555; line-height: 1.4;">${it.size}</div>
+                    <div style="font-size: 10px; color: #855546; font-weight: 800; text-transform: uppercase; margin-top: 4px;">${it.finish || ''}</div>
+                  </td>
+                  <td style="padding: 20px 15px; text-align: left; vertical-align: middle;">
+                    <div style="font-size: 14px; font-weight: 900; color: #111111; text-transform: uppercase; line-height: 1.3; letter-spacing: -0.2px;">${it.design}</div>
+                  </td>
+                  <td style="padding: 20px 15px; text-align: right; font-weight: 950; font-size: 20px; color: #000; vertical-align: middle;">
+                    ${it.qty}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- BRANDED FOOTER -->
+        <div style="background: #855546; padding: 50px 60px; color: #ffffff; text-align: center;">
+           <div style="font-size: 11px; font-weight: 900; color: #ffffff; opacity: 0.7; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 12px;">Order Summary</div>
+           <div style="font-size: 32px; font-weight: 900; margin-bottom: 10px; letter-spacing: -0.5px;">
+             Total Material Count: ${items.reduce((sum, it) => sum + Number(it.qty || 0), 0)} Boxes
+           </div>
+           <div style="font-size: 11px; opacity: 0.5; margin-top: 15px; text-transform: uppercase; letter-spacing: 2.5px; font-weight: 800;">
+             Omada Home Studio • Luxury Material Procurement
+           </div>
+        </div>
+
       </div>
     `;
 
