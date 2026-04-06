@@ -378,14 +378,14 @@ const OrderExportPage = () => {
   };
 
   const handleSave = async () => {
-    if (!supplier || !party) {
-      toast.error('Manufacturing Partner and Party Name are required');
+    if (!supplier) {
+      toast.error('Manufacturing Partner is required');
       return;
     }
 
     const newRecord: any = {
       id: editingId || `ORD-TEMP-${Date.now()}`, // Temporary ID, backend will overwrite with sequence
-      customerName: party,
+      customerName: supplier,
       companyName: supplier,
       mobile: '-',
       salesRef: referParty || '-',
@@ -645,7 +645,7 @@ const OrderExportPage = () => {
             ) : (
                <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-black" />
             )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+            <div className="space-y-4 w-full md:w-auto">
               <div>
                 <Label className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-2 block">Manufacturing Partner</Label>
                 {isExporting ? (
@@ -663,21 +663,6 @@ const OrderExportPage = () => {
                   Authorized Material Supplier
                 </div>
               </div>
-
-              {!isExporting && (
-                <div>
-                  <Label className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-2 block">Party Name (Billed To)</Label>
-                  <Input
-                    value={party}
-                    onChange={e => setParty(e.target.value)}
-                    placeholder="e.g. OMADA HOME STUDIO"
-                    className="border-0 p-0 h-auto text-2xl font-black uppercase text-slate-900 bg-transparent focus-visible:ring-0 placeholder:text-slate-200"
-                  />
-                  <div className="text-[11px] text-blue-600 font-bold uppercase tracking-widest mt-1">
-                    Customer Entity Identification
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
