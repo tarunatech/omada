@@ -63,7 +63,7 @@ const MasterDataPage = () => {
   const fetchDesigns = async () => {
     setLoading(true);
     try {
-      const url = `/master/products?page=${currentDesignPage}&limit=${itemsPerPage}&search=${search}&company=${selectedCompany === 'all' ? '' : selectedCompany}`;
+      const url = `/master/products?page=${currentDesignPage}&limit=${itemsPerPage}&search=${search}&company=${selectedCompany === 'all' ? '' : selectedCompany}&sortBy=id&order=DESC`;
       const res = await api.get(url);
       setDesigns(res.data || []);
       setTotalDesignPages(res.pagination.totalPages || 1);
