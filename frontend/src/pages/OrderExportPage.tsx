@@ -16,6 +16,8 @@ interface OrderItem {
   id: string;
   size: string;
   design: string;
+  finish: string;
+  image?: string;
   qty: number;
 }
 
@@ -108,7 +110,7 @@ const OrderExportPage = () => {
   const addItem = (catId: string) => {
     setCategories(categories.map(c =>
       c.id === catId
-        ? { ...c, items: [...c.items, { id: Date.now().toString(), size: '', design: '', qty: 0 }] }
+        ? { ...c, items: [...c.items, { id: Date.now().toString(), size: '', design: '', finish: '', qty: 0 }] }
         : c
     ));
   };
@@ -239,13 +241,26 @@ const OrderExportPage = () => {
       autoTable(doc, {
         startY: currentY,
         margin: { left: 15, right: 15 },
-        head: [['SR.', 'DIMENSIONS / SIZE', 'DESCRIPTION', 'QUANTITY']],
+        head: [['SR.', 'PHOTO', 'FINISH', 'SIZE', 'QUANTITY']],
         body: cat.items.map((item, idx) => [
           (idx + 1).toString().padStart(2, '0'),
+          '', // Placeholder for image
+          item.finish.toUpperCase(),
           item.size.toUpperCase(),
-          item.design.toUpperCase(),
           item.qty.toLocaleString()
         ]),
+        didDrawCell: (data) => {
+          if (data.section === 'body' && data.column.index === 1) {
+            const item = cat.items[data.row.index];
+            if (item.image) {
+              const x = data.cell.x + 2;
+              const y = data.cell.y + 2;
+              const w = data.cell.width - 4;
+              const h = data.cell.height - 4;
+              doc.addImage(item.image, 'JPEG', x, y, w, h);
+            }
+          }
+        },
         theme: 'grid',
         headStyles: { 
           fillColor: [133, 85, 70], 
@@ -260,13 +275,16 @@ const OrderExportPage = () => {
           fontSize: 8, 
           cellPadding: 4, 
           lineColor: [226, 232, 240], 
-          lineWidth: 0.1 
+          lineWidth: 0.1,
+          minCellHeight: 20,
+          valign: 'middle'
         },
         columnStyles: { 
-          0: { cellWidth: 15, halign: 'left' },
-          1: { cellWidth: 40, halign: 'left' },
-          2: { cellWidth: 'auto', fontStyle: 'normal' },
-          3: { cellWidth: 30, halign: 'right', fontStyle: 'bold' } 
+          0: { cellWidth: 10, halign: 'left' },
+          1: { cellWidth: 30, halign: 'center' },
+          2: { cellWidth: 'auto', halign: 'left' },
+          3: { cellWidth: 40, halign: 'left' },
+          4: { cellWidth: 30, halign: 'right', fontStyle: 'bold' } 
         }
       });
 
@@ -579,8 +597,9 @@ const OrderExportPage = () => {
                   <thead>
                     <tr className="bg-[#855546] text-[9px] font-bold uppercase tracking-[0.1em] text-white">
                       <th className="w-16 py-4 px-4 text-left border border-[#764a3d] rounded-none">SR.</th>
-                      <th className="w-40 py-4 px-4 text-left border border-[#764a3d] rounded-none whitespace-normal break-words">DIMENSIONS / SIZE</th>
-                      <th className="py-4 px-4 text-left border border-[#764a3d] rounded-none whitespace-normal break-words">DESCRIPTION</th>
+                      <th className="w-32 py-4 px-4 text-left border border-[#764a3d] rounded-none">PHOTO</th>
+                      <th className="w-32 py-4 px-4 text-left border border-[#764a3d] rounded-none">FINISH</th>
+                      <th className="w-32 py-4 px-4 text-left border border-[#764a3d] rounded-none">SIZE</th>
                       <th className="w-24 py-4 px-4 text-right border border-[#764a3d] rounded-none">QUANTITY</th>
                     </tr>
                   </thead>
@@ -588,6 +607,62 @@ const OrderExportPage = () => {
                     {cat.items.map((item, idx) => (
                       <tr key={item.id} className="group transition-all">
                         <td className="py-3 px-4 text-left text-slate-500 font-bold text-xs border border-slate-200 uppercase !rounded-none">{(idx + 1).toString().padStart(2, '0')}</td>
+                        
+                        {/* PHOTO COLUMN */}
+                        <td className="py-3 px-4 border border-slate-200 !rounded-none">
+                          <div className="flex flex-col items-center gap-2">
+                            {item.image ? (
+                              <div className="relative group/img">
+                                <img src={item.image} className="w-14 h-14 object-cover rounded-md border border-slate-200" alt="Item" />
+                                {!isExporting && view !== 'view' && (
+                                  <button 
+                                    onClick={() => updateItem(cat.id, item.id, 'image', '')}
+                                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover/img:opacity-100 transition-opacity"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                )}
+                              </div>
+                            ) : (
+                              !isExporting && view !== 'view' && (
+                                <label className="w-12 h-12 rounded-lg border-2 border-dashed border-slate-200 flex items-center justify-center cursor-pointer hover:border-[#855546] hover:bg-[#855546]/5 transition-all">
+                                  <Plus className="w-4 h-4 text-slate-300" />
+                                  <input 
+                                    type="file" 
+                                    className="hidden" 
+                                    accept="image/*"
+                                    onChange={async (e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        const reader = new FileReader();
+                                        reader.onloadend = () => {
+                                          updateItem(cat.id, item.id, 'image', reader.result as string);
+                                        };
+                                        reader.readAsDataURL(file);
+                                      }
+                                    }}
+                                  />
+                                </label>
+                              )
+                            )}
+                          </div>
+                        </td>
+
+                        {/* FINISH COLUMN */}
+                        <td className="py-3 px-4 border border-slate-200 !rounded-none">
+                          {isExporting || view === 'view' ? (
+                             <p className="text-xs font-medium text-slate-600 uppercase whitespace-normal break-words leading-relaxed">{item.finish}</p>
+                          ) : (
+                             <Input 
+                               value={item.finish} 
+                               onChange={e => updateItem(cat.id, item.id, 'finish', e.target.value)}
+                               className="h-8 border-0 p-0 text-xs font-medium text-slate-600 bg-transparent focus-visible:ring-0 placeholder:text-slate-200 uppercase"
+                               placeholder="e.g. GLOSSY"
+                             />
+                          )}
+                        </td>
+
+                        {/* SIZE COLUMN */}
                         <td className="py-3 px-4 border border-slate-200 !rounded-none">
                           {isExporting || view === 'view' ? (
                              <p className="text-xs font-medium text-slate-600 uppercase whitespace-normal break-words leading-relaxed">{item.size}</p>
@@ -600,18 +675,10 @@ const OrderExportPage = () => {
                              />
                           )}
                         </td>
-                        <td className="py-3 px-4 border border-slate-200 !rounded-none">
-                          {isExporting || view === 'view' ? (
-                             <p className="text-xs font-bold text-slate-900 uppercase whitespace-normal break-words leading-tight">{item.design}</p>
-                          ) : (
-                             <Input 
-                               value={item.design} 
-                               onChange={e => updateItem(cat.id, item.id, 'design', e.target.value)}
-                               className="h-8 border-0 p-0 text-xs font-bold text-slate-900 bg-transparent focus-visible:ring-0 placeholder:text-slate-200 uppercase"
-                               placeholder="ITEM DESCRIPTION"
-                             />
-                          )}
-                        </td>
+
+
+
+                        {/* QUANTITY COLUMN */}
                         <td className="py-3 px-4 border border-slate-200 text-right font-black !rounded-none">
                           {isExporting || view === 'view' ? (
                              <p className="text-sm font-black text-slate-900">{item.qty || 0}</p>
