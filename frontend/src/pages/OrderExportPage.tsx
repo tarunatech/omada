@@ -378,9 +378,14 @@ const OrderExportPage = () => {
   };
 
   const handleSave = async () => {
+    if (!supplier || !party) {
+      toast.error('Manufacturing Partner and Party Name are required');
+      return;
+    }
+
     const newRecord: any = {
-      id: editingId || '', // Backend handles ID if empty
-      customerName: party || '-',
+      id: editingId || `ORD-TEMP-${Date.now()}`, // Temporary ID, backend will overwrite with sequence
+      customerName: party,
       companyName: supplier,
       mobile: '-',
       salesRef: referParty || '-',
