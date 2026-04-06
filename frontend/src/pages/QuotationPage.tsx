@@ -800,24 +800,23 @@ const QuotationPage = () => {
             <table style="width: 100%; border-collapse: collapse;">
               <thead>
                 <tr style="background: #855546;">
-                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: center; width: 8%;">Sr.</th>
-                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 55%;">Description</th>
-                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: right; width: 17%;">Specifications</th>
-                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: right; width: 20%;">Qty ordered</th>
+                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 10%;">Sr.</th>
+                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 50%;">Description</th>
+                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: center; width: 20%;">Specifications</th>
+                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: right; width: 20%;">Qty</th>
                 </tr>
               </thead>
               <tbody>
                 ${items.map((it, idx) => `
                   <tr style="border-bottom: 1px solid #EEEEEE;">
-                    <td style="padding: 12px 10px; text-align: center; vertical-align: middle; font-size: 11px; color: #855546; font-weight: 900;">${(idx + 1).toString().padStart(2, '0')}</td>
+                    <td style="padding: 12px 10px; text-align: left; vertical-align: middle; font-size: 11px; color: #888; font-weight: 900;">${(idx + 1).toString().padStart(2, '0')}</td>
 
                     <td style="padding: 10px 10px; vertical-align: middle;">
-                      <div style="font-size: 13px; font-weight: 900; color: #111111; text-transform: uppercase; margin-bottom: 3px;">${it.design}</div>
-                      <div style="font-size: 9px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 1px;">${it.categoryName || 'General'}</div>
+                      <div style="font-size: 13px; font-weight: 900; color: #111111; text-transform: uppercase;">${it.design}</div>
                     </td>
-                    <td style="padding: 10px 10px; text-align: right; vertical-align: middle;">
-                      <div style="font-size: 11px; font-weight: 800; color: #2B2B2B;">${it.size}</div>
-                      <div style="font-size: 9px; color: #855546; font-weight: 700; text-transform: uppercase; margin-top: 2px;">${it.finish}</div>
+                    <td style="padding: 10px 10px; text-align: center; vertical-align: middle;">
+                      <div style="font-size: 11px; font-weight: 800; color: #666;">${it.size}</div>
+                      <div style="font-size: 9px; color: #855546; font-weight: 700; text-transform: uppercase; margin-top: 2px;">${it.finish || ''}</div>
                     </td>
                     <td style="padding: 10px 10px; text-align: right; vertical-align: middle;">
                       <span style="font-size: 18px; font-weight: 950; color: #000000;">${it.multiplier === 1 ? (it.boxes || 0) : it.qty}</span>
@@ -828,13 +827,12 @@ const QuotationPage = () => {
               </tbody>
             </table>
 
-            <div style="margin-top: 30px; display: flex; justify-content: flex-end;">
-               <div style="padding: 25px; background: #000000; border-radius: 8px; text-align: right; min-width: 250px;">
-                  <div style="font-size: 10px; font-weight: 900; color: #855546; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 8px;">Total Material Volume</div>
-                  <div style="font-size: 36px; font-weight: 900; color: #ffffff; letter-spacing: -1px; line-height: 1;">
-                    ${items.reduce((sum, it) => sum + Number((it.multiplier === 1 ? it.boxes : it.qty) || 0), 0)} <span style="font-size: 16px; color: #855546;">Boxes</span>
-                  </div>
-               </div>
+            <div style="margin-top: 50px; padding: 40px; background: #855546; border-radius: 0; text-align: center; color: #ffffff;">
+                <div style="font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 10px; opacity: 0.6;">Order Summary</div>
+                <div style="font-size: 28px; font-weight: 900; margin-bottom: 8px;">
+                  Total Material Count: ${items.reduce((sum, it) => sum + Number((it.multiplier === 1 ? it.boxes : it.qty) || 0), 0)} Boxes
+                </div>
+                <div style="font-size: 10px; font-weight: 800; opacity: 0.4; letter-spacing: 2px;">OMADA HOME STUDIO • LUXURY MATERIAL PROCUREMENT</div>
             </div>
           </div>
 
@@ -911,23 +909,23 @@ const QuotationPage = () => {
             <table style="width: 100%; border-collapse: collapse;">
               <thead>
                 <tr style="background: #855546;">
-                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: center; width: 8%;">Sr.</th>
-                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 55%;">Description</th>
-                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: right; width: 17%;">Specifications</th>
+                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 10%;">Sr.</th>
+                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: left; width: 50%;">Description</th>
+                  <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: center; width: 20%;">Specifications</th>
                   <th style="padding: 15px 10px; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: right; width: 20%;">Qty</th>
                 </tr>
               </thead>
               <tbody>
                 ${items.map((it, idx) => `
                   <tr style="border-bottom: 1px solid #EEEEEE;">
-                    <td style="padding: 20px 10px; text-align: center; font-size: 11px; color: #855546; font-weight: 900;">${(idx + 1).toString().padStart(2, '0')}</td>
+                    <td style="padding: 20px 10px; text-align: left; font-size: 11px; color: #888; font-weight: 900;">${(idx + 1).toString().padStart(2, '0')}</td>
 
                     <td style="padding: 15px 10px;">
-                      <div style="font-size: 13px; font-weight: 900; color: #111111; text-transform: uppercase; margin-bottom: 3px;">${it.design}</div>
+                      <div style="font-size: 13px; font-weight: 900; color: #111111; text-transform: uppercase;">${it.design}</div>
                     </td>
-                    <td style="padding: 15px 10px; text-align: right;">
-                      <div style="font-size: 11px; font-weight: 800; color: #2B2B2B;">${it.size}</div>
-                      <div style="font-size: 9px; color: #855546; font-weight: 700; text-transform: uppercase; margin-top: 2px;">${it.finish}</div>
+                    <td style="padding: 15px 10px; text-align: center;">
+                      <div style="font-size: 11px; font-weight: 800; color: #666;">${it.size}</div>
+                      <div style="font-size: 9px; color: #855546; font-weight: 700; text-transform: uppercase; margin-top: 2px;">${it.finish || ''}</div>
                     </td>
                     <td style="padding: 15px 10px; text-align: right;">
                       <span style="font-size: 18px; font-weight: 950; color: #000000;">${it.qty}</span>
@@ -940,11 +938,11 @@ const QuotationPage = () => {
           </div>
 
           <div style="padding: 40px 60px 40px 60px; background: #855546; color: #ffffff; text-align: center;">
-             <div style="font-size: 10px; font-weight: 900; color: #ffffff; opacity: 0.8; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 8px;">Order Summary</div>
-             <div style="font-size: 24px; font-weight: 900;">
+             <div style="font-size: 10px; font-weight: 900; color: #ffffff; opacity: 0.6; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 10px;">Order Summary</div>
+             <div style="font-size: 28px; font-weight: 900; margin-bottom: 8px;">
                Total Material Count: ${items.reduce((sum, it) => sum + Number(it.qty || 0), 0)} Boxes
              </div>
-             <div style="font-size: 9px; opacity: 0.4; margin-top: 10px; text-transform: uppercase; letter-spacing: 2px;">
+             <div style="font-size: 10px; opacity: 0.4; margin-top: 10px; text-transform: uppercase; letter-spacing: 2px; font-weight: 800;">
                Omada Home Studio • Luxury Material Procurement
              </div>
           </div>

@@ -168,23 +168,30 @@ const OrderExportPage = () => {
     doc.setFillColor(133, 85, 70); // #855546
     doc.rect(0, 0, pageWidth, 50, 'F');
 
-    // Logo
-    doc.addImage(omadaLogo, 'PNG', 20, 20, 24, 8);
-    doc.setFontSize(8);
+    // Logo (Top Left)
+    doc.addImage(omadaLogo, 'PNG', 20, 15, 24, 8);
+    
+    // Purchase Order Title (Left Aligned, below logo)
     doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'normal');
-    doc.text('WORLD OF LUXURY', 20, 32);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('PURCHASE ORDER', 20, 38);
 
-    // Header Right Text
+    // Header Right Text (Metadata)
     doc.setFontSize(7);
-    doc.text('PURCHASE ORDER', pageWidth - 20, 20, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(255, 255, 255, 0.6); // Slightly transparent white
+    doc.text('ORDER REFERENCE', pageWidth - 20, 15, { align: 'right' });
+    
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text(editingId || 'ORD-NEW', pageWidth - 20, 26, { align: 'right' });
+    doc.setTextColor(255, 255, 255);
+    doc.text(editingId || 'ORD-NEW', pageWidth - 20, 22, { align: 'right' });
+    
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    doc.text(`ISSUED: ${today.toUpperCase()}`, pageWidth - 20, 32, { align: 'right' });
+    const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    doc.text(today, pageWidth - 20, 28, { align: 'right' });
 
     // 2. PARTNER CARD (GREY CARD)
     doc.setFillColor(248, 250, 252); // Slate 50
@@ -224,32 +231,34 @@ const OrderExportPage = () => {
       autoTable(doc, {
         startY: currentY,
         margin: { left: 15, right: 15 },
-        head: [['SR.', 'DIMENSIONS / SIZE', 'DESCRIPTION', 'QUANTITY']],
+        head: [['SR.', 'DESCRIPTION', 'SPECIFICATIONS', 'QTY']],
         body: cat.items.map((item, idx) => [
           (idx + 1).toString().padStart(2, '0'),
-          item.size.toUpperCase(),
           item.design.toUpperCase(),
-          item.qty.toLocaleString()
+          item.size.toUpperCase(),
+          `${item.qty.toLocaleString()} BOXES`
         ]),
         theme: 'grid',
         headStyles: { 
           fillColor: [133, 85, 70], 
           textColor: [255, 255, 255], 
-          fontSize: 8, 
+          fontSize: 7, 
           fontStyle: 'bold',
           cellPadding: 4,
           halign: 'left'
         },
-        alternateRowStyles: { fillColor: [252, 252, 252] },
+        alternateRowStyles: { fillColor: [255, 255, 255] },
         styles: { 
-          fontSize: 9, 
+          fontSize: 8, 
           cellPadding: 4, 
           lineColor: [241, 245, 249], 
           lineWidth: 0.1 
         },
         columnStyles: { 
           0: { cellWidth: 15, halign: 'left' },
-          3: { halign: 'right', fontStyle: 'bold' } 
+          1: { cellWidth: 'auto', fontStyle: 'bold' },
+          2: { cellWidth: 40, halign: 'center' },
+          3: { cellWidth: 25, halign: 'right', fontStyle: 'bold' } 
         }
       });
 
@@ -495,13 +504,15 @@ const OrderExportPage = () => {
            <div className="bg-[#855546] p-12 flex justify-between items-end relative overflow-hidden mb-6">
               <div className="absolute top-0 right-0 w-96 h-96 bg-black/5 rounded-full -mr-48 -mt-48 blur-3xl pointer-events-none" />
               <div className="relative z-10">
-                <img src={omadaLogo} className="h-10 mb-8 block" alt="OMADA" />
-                <h1 className="text-5xl font-black text-white uppercase tracking-widest leading-none">Purchase Order</h1>
+                <img src={omadaLogo} className="h-10 mb-10 block" alt="OMADA" />
+                <h1 className="text-4xl font-black text-white uppercase tracking-[0.1em] leading-none mb-1">Purchase Order</h1>
               </div>
               <div className="relative z-10 text-right text-white pb-1">
-                <p className="text-[10px] uppercase font-black tracking-[0.4em] opacity-50 mb-3">Order Reference</p>
-                <p className="text-4xl font-black mb-1">{editingId || 'NEW'}</p>
-                <p className="text-sm font-black opacity-50 tracking-widest">{new Date().toLocaleDateString('en-GB')}</p>
+                <p className="text-[9px] uppercase font-bold tracking-[0.2em] opacity-60 mb-2">Order Reference</p>
+                <p className="text-2xl font-bold mb-1">{editingId || 'NEW'}</p>
+                <p className="text-[11px] font-bold opacity-60 tracking-wider">
+                  {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                </p>
               </div>
            </div>
         )}
@@ -518,28 +529,27 @@ const OrderExportPage = () => {
           </div>
         )}
           <div className="p-8 sm:p-10 bg-slate-50/50">
-            <div className="bg-white border border-slate-200 rounded-3xl p-8 flex flex-col md:flex-row justify-between items-start md:items-center relative overflow-hidden shadow-sm">
-              <div className="absolute top-0 left-0 bottom-0 w-2 bg-black" />
+            <div className="bg-white border border-slate-100 rounded-2xl p-8 flex flex-col md:flex-row justify-between items-start md:items-center relative overflow-hidden shadow-sm">
+              <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-black" />
               <div className="space-y-4 w-full md:w-auto">
                 <div>
-                  <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 block">Manufacturing Partner</Label>
+                  <Label className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-2 block">Manufacturing Partner</Label>
                   <Input
                     value={supplier}
                     onChange={e => setSupplier(e.target.value)}
                     placeholder="e.g. KAJARIA CERAMICS LTD."
-                    className="border-0 p-0 h-auto text-3xl font-black uppercase text-slate-900 bg-transparent focus-visible:ring-0 placeholder:text-slate-200"
+                    className="border-0 p-0 h-auto text-2xl font-black uppercase text-slate-900 bg-transparent focus-visible:ring-0 placeholder:text-slate-200"
                     disabled={view === 'view'}
                   />
-                  <div className="text-sm text-[#855546] font-black uppercase tracking-widest mt-1 opacity-80">
+                  <div className="text-[11px] text-[#855546] font-bold uppercase tracking-widest mt-1">
                     Authorized Material Supplier
                   </div>
                 </div>
               </div>
 
               <div className="mt-6 md:mt-0 text-left md:text-right border-t md:border-t-0 pt-6 md:pt-0 w-full md:w-auto">
-                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 mb-2">Order Status</div>
-                <div className="inline-flex items-center px-6 py-3 rounded-2xl bg-slate-100 text-slate-900 font-black uppercase tracking-[0.1em] text-sm shadow-inner transition-colors">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 mr-3 animate-pulse" />
+                <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-2">Status</div>
+                <div className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-100 text-slate-900 font-bold uppercase tracking-[0.05em] text-[11px] border border-slate-200 shadow-sm">
                   CONFIRMED
                 </div>
               </div>
@@ -582,21 +592,31 @@ const OrderExportPage = () => {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-[#855546] text-[10px] font-black uppercase tracking-[0.3em] text-white border-b border-[#764a3d] shadow-sm">
-                      <th className="w-20 py-7 px-10 text-left">Sr.</th>
-                      <th className="py-7 px-10 text-left">Dimensions / Size</th>
-                      <th className="py-7 px-10 text-left">Description</th>
-                      <th className="w-56 py-7 px-10 text-right">Quantity Ordered</th>
-                      {!isExporting && <th className="w-16 py-7 px-10 text-right"></th>}
+                    <tr className="bg-[#855546] text-[10px] font-bold uppercase tracking-[0.15em] text-white">
+                      <th className="w-20 py-5 px-10 text-left border-r border-[#764a3d]/20">SR.</th>
+                      <th className="py-5 px-10 text-left border-r border-[#764a3d]/20">DESCRIPTION</th>
+                      <th className="py-5 px-10 text-center border-r border-[#764a3d]/20">SPECIFICATIONS</th>
+                      <th className="w-40 py-5 px-10 text-right">QTY</th>
+                      {!isExporting && <th className="w-16 py-5 px-10 text-right"></th>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {cat.items.map((item, idx) => (
                       <tr key={item.id} className="group hover:bg-slate-50/50 transition-all">
-                        <td className="py-5 px-10 text-slate-400 font-black text-sm">{idx + 1}</td>
-                        <td className="py-5 px-10">
+                        <td className="py-5 px-6 text-center text-slate-400 font-bold text-xs border-r border-slate-100">{(idx + 1).toString().padStart(2, '0')}</td>
+                        <td className="py-5 px-10 border-r border-slate-100">
                           <Input
-                            className={`h-10 text-sm border-0 bg-transparent focus-visible:ring-1 font-black uppercase tracking-tight text-slate-800 ${isExporting ? 'p-0' : ''}`}
+                            className={`h-10 text-sm border-0 bg-transparent focus-visible:ring-1 font-bold uppercase tracking-tight text-slate-900 ${isExporting ? 'p-0 h-auto' : ''}`}
+                            value={item.design}
+                            onChange={e => updateItem(cat.id, item.id, 'design', e.target.value)}
+                            placeholder="e.g. Statuario Marble"
+                            disabled={view === 'view'}
+                            readOnly={isExporting}
+                          />
+                        </td>
+                        <td className="py-5 px-10 border-r border-slate-100">
+                          <Input
+                            className={`h-10 text-sm border-0 bg-transparent focus-visible:ring-1 font-bold uppercase tracking-tight text-slate-600 text-center ${isExporting ? 'p-0 h-auto' : ''}`}
                             value={item.size}
                             onChange={e => updateItem(cat.id, item.id, 'size', e.target.value)}
                             placeholder="e.g. 600x1200mm"
@@ -605,27 +625,17 @@ const OrderExportPage = () => {
                           />
                         </td>
                         <td className="py-5 px-10">
-                          <Input
-                            className={`h-10 text-sm border-0 bg-transparent focus-visible:ring-1 font-black uppercase tracking-tight text-slate-800 ${isExporting ? 'p-0' : ''}`}
-                            value={item.design}
-                            onChange={e => updateItem(cat.id, item.id, 'design', e.target.value)}
-                            placeholder="e.g. Statuario Marble"
-                            disabled={view === 'view'}
-                            readOnly={isExporting}
-                          />
-                        </td>
-                        <td className="py-6 px-10">
-                          <div className="flex flex-col items-end">
+                          <div className="flex items-center justify-end gap-1.5">
                             <Input
                               type="number"
-                              className={`h-10 text-2xl font-black border-0 bg-transparent focus-visible:ring-1 text-right no-spinner text-slate-900 ${isExporting ? 'p-0 h-auto w-full' : ''}`}
+                              className={`h-10 text-lg font-black border-0 bg-transparent focus-visible:ring-1 text-right no-spinner text-slate-900 ${isExporting ? 'p-0 h-auto w-10' : 'w-24'}`}
                               value={item.qty || ''}
                               onChange={e => updateItem(cat.id, item.id, 'qty', +e.target.value)}
                               onWheel={(e) => (e.target as HTMLInputElement).blur()}
                               disabled={view === 'view'}
                               readOnly={isExporting}
                             />
-                            {isExporting && <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">Boxes</span>}
+                            <span className="text-[11px] font-black uppercase text-slate-900 shrink-0">Boxes</span>
                           </div>
                         </td>
                         {!isExporting && view !== 'view' && (
