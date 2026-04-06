@@ -150,7 +150,8 @@ export const createQuotation = async (req: Request, res: Response) => {
         const user = (req as any).user;
         // Server-side ID generation to prevent collisions
         let finalId = id;
-        if (!id || id.startsWith('Q-') || id.startsWith('S-') || id.startsWith('ORD-')) {
+        // Force server-side ID for new orders or quotations matching prefixes
+        if (!id || id.startsWith('Q-') || id.startsWith('S-') || id.startsWith('ORD-') || type === 'OrderExport') {
             if (type === 'Sample') {
                 const seqResult = await client.query("SELECT nextval('sample_number_seq') as num");
                 finalId = `S-${seqResult.rows[0].num}`;
