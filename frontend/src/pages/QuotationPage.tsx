@@ -1336,29 +1336,46 @@ const QuotationPage = () => {
                                                                             const val = e.target.value;
                                                                             updateItem(cat.id, item.id, 'design', val);
 
-                                                                            // If matched exactly with a master product, auto-fill
-                                                                            const matched = masterProducts.find(p =>
+                                                                            // 1. First, search in current session (existing items in this quotation)
+                                                                            const allSessionItems = categories.flatMap(c => c.items);
+                                                                            const sessionMatch = allSessionItems.find(i => 
+                                                                                i.id !== item.id && // Don't match self
+                                                                                i.design.toLowerCase() === val.toLowerCase() && 
+                                                                                i.image && // Must have a photo
+                                                                                (!item.company || i.company.toLowerCase() === item.company.toLowerCase())
+                                                                            );
+
+                                                                            // 2. Second, search in Master Data
+                                                                            const masterMatch = masterProducts.find(p =>
                                                                                 p.design.toLowerCase() === val.toLowerCase() &&
                                                                                 (!item.company || p.company.toLowerCase() === item.company.toLowerCase())
                                                                             );
+
+                                                                            const matched = sessionMatch || masterMatch;
+
                                                                             if (matched) {
                                                                                 setCategories(prev => prev.map(c => c.id === cat.id ? {
                                                                                     ...c, items: c.items.map(i => {
                                                                                         if (i.id === item.id) {
+                                                                                            // Map fields from match (Session items use same keys as master items for core fields)
                                                                                             const newSize = matched.size || i.size;
                                                                                             const opts = getSizeMultiplierOptions(newSize);
                                                                                             const updated = {
                                                                                                 ...i,
-                                                                                                company: matched.company,
-                                                                                                design: matched.design, // Use correct casing
-                                                                                                finish: matched.finish || i.finish,
+                                                                                                company: matched.company || i.company,
+                                                                                                design: matched.design, // Correct casing
+                                                                                                finish: (matched as any).finish || i.finish,
                                                                                                 size: newSize,
                                                                                                 image: matched.image || i.image,
                                                                                             };
                                                                                             if (!opts.includes(updated.multiplier)) {
                                                                                                 updated.multiplier = opts[0];
                                                                                             }
-                                                                                            updated.total = (Number(updated.multiplier) || 0) * (Number(updated.qty) || 0) * (Number(updated.unitPrice) || 0);
+                                                                                            // Total calculation
+                                                                                            const m = Number(updated.multiplier) || 0;
+                                                                                            const q = Number(updated.qty) || 0;
+                                                                                            const p = Number(updated.unitPrice) || 0;
+                                                                                            updated.total = m * q * p;
                                                                                             return updated;
                                                                                         }
                                                                                         return i;
