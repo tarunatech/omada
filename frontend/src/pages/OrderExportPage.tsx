@@ -589,13 +589,40 @@ const OrderExportPage = () => {
                       <tr key={item.id} className="group transition-all">
                         <td className="py-3 px-4 text-left text-slate-500 font-bold text-xs border border-slate-200 uppercase !rounded-none">{(idx + 1).toString().padStart(2, '0')}</td>
                         <td className="py-3 px-4 border border-slate-200 !rounded-none">
-                          <p className="text-xs font-medium text-slate-600 uppercase whitespace-normal break-words leading-relaxed">{item.size}</p>
+                          {isExporting || view === 'view' ? (
+                             <p className="text-xs font-medium text-slate-600 uppercase whitespace-normal break-words leading-relaxed">{item.size}</p>
+                          ) : (
+                             <Input 
+                               value={item.size} 
+                               onChange={e => updateItem(cat.id, item.id, 'size', e.target.value)}
+                               className="h-8 border-0 p-0 text-xs font-medium text-slate-600 bg-transparent focus-visible:ring-0 placeholder:text-slate-200 uppercase"
+                               placeholder="SIZE/DIM."
+                             />
+                          )}
                         </td>
                         <td className="py-3 px-4 border border-slate-200 !rounded-none">
-                          <p className="text-xs font-bold text-slate-900 uppercase whitespace-normal break-words leading-tight">{item.design}</p>
+                          {isExporting || view === 'view' ? (
+                             <p className="text-xs font-bold text-slate-900 uppercase whitespace-normal break-words leading-tight">{item.design}</p>
+                          ) : (
+                             <Input 
+                               value={item.design} 
+                               onChange={e => updateItem(cat.id, item.id, 'design', e.target.value)}
+                               className="h-8 border-0 p-0 text-xs font-bold text-slate-900 bg-transparent focus-visible:ring-0 placeholder:text-slate-200 uppercase"
+                               placeholder="ITEM DESCRIPTION"
+                             />
+                          )}
                         </td>
                         <td className="py-3 px-4 border border-slate-200 text-right font-black !rounded-none">
-                          <p className="text-sm font-black text-slate-900">{item.qty || 0}</p>
+                          {isExporting || view === 'view' ? (
+                             <p className="text-sm font-black text-slate-900">{item.qty || 0}</p>
+                          ) : (
+                             <Input 
+                               type="number"
+                               value={item.qty} 
+                               onChange={e => updateItem(cat.id, item.id, 'qty', e.target.value)}
+                               className="h-8 border-0 p-0 text-sm font-black text-slate-900 bg-transparent focus-visible:ring-0 text-right"
+                             />
+                          )}
                         </td>
                         {!isExporting && view !== 'view' && (
                           <td className="py-3 px-4 text-right border border-slate-200">
@@ -606,9 +633,22 @@ const OrderExportPage = () => {
                         )}
                       </tr>
                     ))}
-                    {cat.items.length === 0 && (
+                    {!isExporting && view !== 'view' && (
                       <tr>
-                        <td colSpan={5} className="py-12 text-center text-sm text-slate-400 font-bold uppercase tracking-widest">No line items configured yet.</td>
+                        <td colSpan={5} className="p-0">
+                           <Button 
+                            variant="ghost" 
+                            className="w-full h-10 rounded-none border-t border-slate-100 text-primary hover:bg-primary/5 font-bold uppercase tracking-widest text-[9px] flex items-center justify-center gap-2"
+                            onClick={() => addItem(cat.id)}
+                           >
+                             <Plus className="w-3 h-3" /> ADD NEW LINE ITEM
+                           </Button>
+                        </td>
+                      </tr>
+                    )}
+                    {cat.items.length === 0 && isExporting && (
+                      <tr>
+                        <td colSpan={4} className="py-12 text-center text-sm text-slate-400 font-bold uppercase tracking-widest">No line items configured yet.</td>
                       </tr>
                     )}
                   </tbody>
