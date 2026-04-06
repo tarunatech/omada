@@ -178,65 +178,58 @@ const OrderExportPage = () => {
     const doc = new jsPDF('p', 'mm', 'a4');
     const pageWidth = doc.internal.pageSize.getWidth();
 
-    // 1. HEADER (BROWN BOX)
-    doc.setFillColor(133, 85, 70); // #855546
-    doc.rect(0, 0, pageWidth, 45, 'F');
+    // 1. BRANDED HEADER (BROWN BOX)
+    doc.setFillColor(133, 85, 70);
+    doc.rect(0, 0, pageWidth, 55, 'F');
 
-    // Logo (Top Left)
-    doc.addImage(omadaLogo, 'PNG', 20, 12, 28, 10);
+    // Logo & Tagline (Left)
+    doc.addImage(omadaLogo, 'PNG', 15, 12, 40, 10);
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    doc.text('WORLD OF LUXURY', 20, 26);
-    
-    // Header Right Text (Metadata - Matching Image 2)
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'bold');
-    doc.text('PURCHASE ORDER', pageWidth - 20, 15, { align: 'right' });
-    
-    doc.setFontSize(11);
-    doc.text(editingId || 'ORD-NEW', pageWidth - 20, 22, { align: 'right' });
-    
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(255, 255, 255, 0.8);
-    const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
-    doc.text(`ISSUED: ${today}`, pageWidth - 20, 28, { align: 'right' });
+    doc.text('WORLD OF LUXURY', 15, 27, { charSpace: 1.5 });
 
-    // 2. PARTNER CARD (GREY CARD)
-    doc.setFillColor(248, 250, 252); // Slate 50
-    doc.setDrawColor(241, 245, 249);
-    doc.roundedRect(15, 60, pageWidth - 30, 30, 4, 4, 'FD');
-    
-    // Vertical Accent Line for card
-    doc.setDrawColor(133, 85, 70);
-    doc.setLineWidth(1.5);
-    doc.line(17, 65, 17, 85);
-
-    doc.setTextColor(100, 116, 139); // Slate 500
+    // Order ID & Date (Right)
     doc.setFontSize(7);
-    doc.setFont('helvetica', 'bold');
-    doc.text('MANUFACTURING PARTNER', 23, 68);
+    doc.setTextColor(255, 255, 255);
+    doc.text('PURCHASE ORDER', pageWidth - 15, 18, { align: 'right', charSpace: 2 });
     
-    doc.setTextColor(17, 24, 39); // Gray 900
-    doc.setFontSize(12);
+    doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
-    doc.text(supplier.toUpperCase(), 23, 76);
-    
-    doc.setTextColor(133, 85, 70);
+    doc.text(editingId || 'NEW-ORDER', pageWidth - 15, 30, { align: 'right' });
+
+    // Issued Pill
+    const dateStr = `ISSUED: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}`;
     doc.setFontSize(8);
-    doc.text('AUTHORIZED MATERIAL SUPPLIER', 23, 83);
+    doc.setFillColor(255, 255, 255, 0.15); // Glass effect
+    doc.roundedRect(pageWidth - 65, 35, 50, 6, 3, 3, 'F');
+    doc.text(dateStr, pageWidth - 15, 39, { align: 'right', charSpace: 1 });
+
+    // 2. PARTNER INFO BAR (BOTTOM OF HEADER)
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(15, 65, pageWidth - 30, 25, 4, 4, 'S'); // Outline card
+    
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(7);
+    doc.text('MANUFACTURING PARTNER', 25, 75);
+    
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(supplier.toUpperCase() || 'E.G. KAJARIA CERAMICS LTD.', 25, 83);
 
     // 3. ITEMS TABLE
     let currentY = 105;
 
     categories.forEach((cat) => {
-      // Category Name
+      // Category Name Banner
+      doc.setFillColor(248, 250, 252);
+      doc.rect(15, currentY - 5, pageWidth - 30, 8, 'F');
       doc.setTextColor(15, 23, 42);
       doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
-      doc.text(cat.name.toUpperCase(), 20, currentY);
-      currentY += 5;
+      doc.text(cat.name.toUpperCase() || 'ORDER ITEMS', 20, currentY);
+      currentY += 8;
 
       autoTable(doc, {
         startY: currentY,
@@ -258,7 +251,9 @@ const OrderExportPage = () => {
               const y = data.cell.y + 2;
               const w = data.cell.width - 4;
               const h = data.cell.height - 4;
-              doc.addImage(item.image, 'JPEG', x, y, w, h);
+              try {
+                doc.addImage(item.image, 'JPEG', x, y, w, h);
+              } catch(e) {}
             }
           }
         },
@@ -271,7 +266,6 @@ const OrderExportPage = () => {
           cellPadding: 4,
           halign: 'left'
         },
-        alternateRowStyles: { fillColor: [255, 255, 255] },
         styles: { 
           fontSize: 8, 
           cellPadding: 4, 
@@ -303,21 +297,23 @@ const OrderExportPage = () => {
     const totalMaterials = categories.reduce((sum, cat) => 
       sum + cat.items.reduce((cSum, i) => cSum + i.qty, 0), 0);
 
+    const footerY = 260;
     doc.setFillColor(133, 85, 70);
-    doc.rect(0, 260, pageWidth, 37, 'F');
+    doc.rect(0, footerY, pageWidth, 37, 'F');
 
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
-    doc.text('ORDER SUMMARY', pageWidth / 2, 270, { align: 'center' });
+    doc.text('ORDER SUMMARY', pageWidth / 2, footerY + 10, { align: 'center', charSpace: 2 });
     
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.text(`Total Material Count: ${totalMaterials.toLocaleString()} Boxes`, pageWidth / 2, 280, { align: 'center' });
+    doc.text(`Total Material Count: ${totalMaterials.toLocaleString()} Boxes`, pageWidth / 2, footerY + 20, { align: 'center' });
     
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.text('OMADA HOME STUDIO   \u2022   LUXURY MATERIAL PROCUREMENT', pageWidth / 2, 288, { align: 'center' });
+    const footerText = 'OMADA HOME STUDIO   •   LUXURY MATERIAL PROCUREMENT';
+    doc.text(footerText.toUpperCase(), pageWidth / 2, footerY + 30, { align: 'center', charSpace: 1.5 });
 
     doc.save(`${editingId || 'PO'}_${supplier}.pdf`);
     toast.success('PDF exported successfully');
