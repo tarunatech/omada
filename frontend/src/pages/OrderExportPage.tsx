@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { FileDown, ImageDown, Plus, Trash2, Loader2, ArrowLeft, Search, Pencil, Save, X, List, SquarePlus, Eye, Building2 } from 'lucide-react';
+import { FileDown, ImageDown, Plus, Trash2, Loader2, ArrowLeft, Search, Pencil, Save, X, List, SquarePlus, Eye, Building2, Users } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toPng } from 'html-to-image';
