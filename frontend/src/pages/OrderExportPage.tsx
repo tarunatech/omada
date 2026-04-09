@@ -971,16 +971,8 @@ const OrderExportPage = () => {
                 Consolidated Allocation Summary
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {categorySummary.map(s => (s.category && (
-                  <div key={s.category} className="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-md">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">{s.category}</p>
-                    <div className="flex items-end gap-3">
-                      <p className="text-4xl font-black tracking-tighter text-white">{s.totalQty.toLocaleString()}</p>
-                      <p className="text-xs font-black uppercase tracking-widest text-white/60 mb-2">Units</p>
-                    </div>
-                  </div>
-                )))}
-                <div className="bg-[#111111] border border-white/10 rounded-3xl p-8 shadow-xl shadow-black/40">
+                {/* Grand Total Card */}
+                <div className="bg-[#111111] border border-white/10 rounded-3xl p-8 shadow-xl shadow-black/40 md:col-start-1 lg:col-start-1">
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Grand Total Material</p>
                   <div className="flex items-end gap-3">
                     <p className="text-4xl font-black tracking-tighter text-white">
