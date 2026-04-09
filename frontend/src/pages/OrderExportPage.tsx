@@ -131,8 +131,20 @@ const OrderExportPage = () => {
     }
   };
 
+  const [masterProducts, setMasterProducts] = useState<any[]>([]);
+
+  const fetchMasterProducts = async () => {
+    try {
+      const res = await api.get('/master/products?limit=2000');
+      setMasterProducts(res.data || []);
+    } catch (err) {
+      console.error('Failed to fetch master products:', err);
+    }
+  };
+
   useEffect(() => {
     fetchOrders();
+    fetchMasterProducts();
   }, [search, currentPage]);
 
   const [supplier, setSupplier] = useState('');
@@ -145,28 +157,6 @@ const OrderExportPage = () => {
   const exportRef = useRef<HTMLDivElement>(null);
 
   const [categories, setCategories] = useState<OrderCategory[]>([]);
-  const [allCompanies, setAllCompanies] = useState<any[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-
-  useEffect(() => {
-    const fetchCompanies = async () => {
-      try {
-        const res = await api.get('/master/companies?limit=1000');
-        setAllCompanies(res.data || []);
-      } catch (err) {
-        console.error('Failed to fetch companies for suggestions:', err);
-      }
-    };
-    fetchCompanies();
-  }, []);
-
-  const filteredCompanies = useMemo(() => {
-    if (!supplier.trim()) return [];
-    return allCompanies.filter(c => 
-      c.name.toLowerCase().includes(supplier.toLowerCase()) &&
-      c.name.toLowerCase() !== supplier.toLowerCase()
-    ).slice(0, 8);
-  }, [supplier, allCompanies]);
 
   const resetForm = () => {
     setSupplier('');
@@ -207,6 +197,14 @@ const OrderExportPage = () => {
     setCategories(categories.map(c =>
       c.id === catId
         ? { ...c, items: c.items.map(i => i.id === itemId ? { ...i, [field]: value } : i) }
+        : c
+    ));
+  };
+
+  const updateItemFields = (catId: string, itemId: string, fields: Partial<OrderItem>) => {
+    setCategories(categories.map(c =>
+      c.id === catId
+        ? { ...c, items: c.items.map(i => i.id === itemId ? { ...i, ...fields } : i) }
         : c
     ));
   };
@@ -673,47 +671,15 @@ const OrderExportPage = () => {
                 <Label className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-2 block">Manufacturing Partner</Label>
                 {isExporting ? (
                   <p className="text-2xl font-black uppercase text-slate-900">{supplier || 'E.G. KAJARIA CERAMICS LTD.'}</p>
-                 ) : (
-                   <div className="relative group/suggest">
-                    <Input
-                      value={supplier}
-                      onChange={e => {
-                        setSupplier(e.target.value);
-                        setShowSuggestions(true);
-                      }}
-                      onFocus={() => setShowSuggestions(true)}
-                      onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                      placeholder="e.g. KAJARIA CERAMICS LTD."
-                      className="border-0 p-0 h-auto text-2xl font-black uppercase text-slate-900 bg-transparent focus-visible:ring-0 placeholder:text-slate-200 w-full"
-                      disabled={view === 'view'}
-                    />
-                    
-                    {showSuggestions && filteredCompanies.length > 0 && view !== 'view' && (
-                      <div className="absolute top-full left-0 z-[100] mt-2 w-full min-w-[300px] bg-white rounded-2xl border border-slate-100 shadow-2xl shadow-slate-200/60 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
-                        <div className="p-2 bg-slate-50/50 border-b border-slate-100">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-3 py-1">Existing Partners In Master Data</p>
-                        </div>
-                        <div className="max-h-[250px] overflow-y-auto custom-scrollbar">
-                          {filteredCompanies.map((c) => (
-                            <button
-                              key={c.id}
-                              onClick={() => {
-                                setSupplier(c.name);
-                                setShowSuggestions(false);
-                              }}
-                              className="w-full text-left px-5 py-4 hover:bg-primary/5 transition-all flex items-center gap-4 group/item"
-                            >
-                              <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 group-hover/item:bg-primary/10 group-hover/item:text-primary group-hover/item:border-primary/20 transition-all">
-                                <Building2 className="w-4 h-4" />
-                              </div>
-                              <span className="text-sm font-bold text-slate-700 uppercase tracking-tight group-hover/item:text-primary transition-colors">{c.name}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                   </div>
-                 )}
+                ) : (
+                  <Input
+                    value={supplier}
+                    onChange={e => setSupplier(e.target.value)}
+                    placeholder="e.g. KAJARIA CERAMICS LTD."
+                    className="border-0 p-0 h-auto text-2xl font-black uppercase text-slate-900 bg-transparent focus-visible:ring-0 placeholder:text-slate-200"
+                    disabled={view === 'view'}
+                  />
+                )}
                 <div className="text-[11px] text-[#855546] font-bold uppercase tracking-widest mt-1">
                   Authorized Material Supplier
                 </div>
@@ -792,16 +758,56 @@ const OrderExportPage = () => {
                         </td>
 
                         {/* DESIGN COLUMN - Expanding column */}
-                        <td className="py-3 px-4 border border-slate-200 !rounded-none">
+                        <td className="py-3 px-4 border border-slate-200 !rounded-none relative overflow-visible">
                           {isExporting || view === 'view' ? (
                              <p className="text-xs font-bold text-slate-900 uppercase whitespace-normal break-words leading-tight">{item.design}</p>
                           ) : (
-                             <Input 
-                               value={item.design} 
-                               onChange={e => updateItem(cat.id, item.id, 'design', e.target.value)}
-                               className="h-8 border-0 p-0 text-xs font-bold text-slate-900 bg-transparent focus-visible:ring-0 placeholder:text-slate-200 uppercase"
-                               placeholder="ITEM DESIGN"
-                             />
+                             <div className="relative">
+                               <Input 
+                                 value={item.design} 
+                                 onChange={e => updateItem(cat.id, item.id, 'design', e.target.value)}
+                                 className="h-8 border-0 p-0 text-xs font-bold text-slate-900 bg-transparent focus-visible:ring-0 placeholder:text-slate-200 uppercase"
+                                 placeholder="ITEM DESIGN"
+                               />
+                               {item.design && item.design.length > 1 && (
+                                 <div className="absolute top-full left-0 w-64 bg-white border border-slate-200 shadow-xl rounded-xl mt-1 z-[100] max-h-48 overflow-y-auto overflow-x-hidden">
+                                   {masterProducts
+                                     .filter(p => p.design.toLowerCase().includes(item.design.toLowerCase()))
+                                     .slice(0, 10)
+                                     .map((p, idx) => (
+                                       <button
+                                         key={p.id || idx}
+                                         className="w-full text-left px-4 py-2 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0"
+                                         onClick={() => {
+                                           updateItemFields(cat.id, item.id, {
+                                             design: p.design,
+                                             finish: p.finish,
+                                             size: p.size,
+                                             image: p.image || undefined
+                                           });
+                                         }}
+                                       >
+                                         <div className="flex items-center gap-3">
+                                           {p.image ? (
+                                             <img src={p.image} className="w-8 h-8 rounded object-cover border border-slate-100" />
+                                           ) : (
+                                             <div className="w-8 h-8 rounded bg-slate-50 flex items-center justify-center text-[10px] text-slate-400 font-bold border border-slate-100">NA</div>
+                                           )}
+                                           <div>
+                                             <p className="text-[10px] font-black uppercase tracking-tight text-slate-900 leading-none mb-1">{p.design}</p>
+                                             <div className="flex items-center gap-2">
+                                               <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{p.size}</p>
+                                               <div className="w-1 h-1 bg-slate-200 rounded-full" />
+                                               <p className="text-[8px] font-bold text-primary uppercase tracking-widest">{p.finish}</p>
+                                             </div>
+                                           </div>
+                                         </div>
+                                       </button>
+                                     ))
+                                   }
+                                 </div>
+                               )}
+                             </div>
                           )}
                         </td>
 
