@@ -395,6 +395,7 @@ const OrderExportPage = () => {
         ...c,
         items: c.items.map(i => ({
             ...i,
+            company: supplier, // Link each item to the selected supplier
             total: 0,
             multiplier: 1, // Store default for order items
             unitPrice: 0
