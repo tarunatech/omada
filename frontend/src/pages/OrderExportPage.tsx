@@ -691,7 +691,7 @@ const OrderExportPage = () => {
         {/* Categories and Item Tables */}
         <div className={`${isExporting ? 'mx-10 space-y-8' : 'space-y-12'}`}>
           {categories.map((cat) => (
-            <div key={cat.id} className={isExporting ? 'mb-12' : 'bg-white rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden'}>
+            <div key={cat.id} className={isExporting ? 'mb-12' : 'bg-white rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-visible'}>
               {isExporting ? (
                  <p className="text-sm font-black text-slate-900 uppercase tracking-widest mb-4 px-4">{cat.name || 'ORDER ITEMS'}</p>
               ) : (
