@@ -106,11 +106,11 @@ export const getMasterProducts = async (req: Request, res: Response) => {
                        FROM quotation_items qi
                        JOIN quotation_categories qc ON qi.category_id = qc.id
                        JOIN quotations q ON qc.quotation_id = q.id
-                       WHERE LOWER(qi.company) = LOWER(mp.company) 
-                         AND LOWER(qi.design) = LOWER(mp.design)
-                         AND COALESCE(LOWER(qi.finish), '') = COALESCE(LOWER(mp.finish), '')
-                         AND COALESCE(LOWER(qi.size), '') = COALESCE(LOWER(mp.size), '')
-                         AND q.status = 'Final'
+                        WHERE TRIM(LOWER(qi.company)) = TRIM(LOWER(mp.company)) 
+                          AND TRIM(LOWER(qi.design)) = TRIM(LOWER(mp.design))
+                          AND COALESCE(TRIM(LOWER(qi.finish)), '') = COALESCE(TRIM(LOWER(mp.finish)), '')
+                          AND COALESCE(TRIM(LOWER(qi.size)), '') = COALESCE(TRIM(LOWER(mp.size)), '')
+                          AND q.status = 'Final'
                    ), 0) as total_quantity_used
             FROM master_products mp
         `;
@@ -159,9 +159,14 @@ export const createMasterProduct = async (req: Request, res: Response) => {
         const { company, design, finish, size, image } = req.body;
         if (!company || !design) return res.status(400).json({ error: 'Company and design are required' });
 
+        const trimmedCompany = company.trim();
+        const trimmedDesign = design.trim();
+        const trimmedFinish = finish?.trim() || null;
+        const trimmedSize = size?.trim() || null;
+
         const result = await pool.query(
-            'INSERT INTO master_products (company, design, finish, size, image) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (company, design, finish, size) DO UPDATE SET image = COALESCE(EXCLUDED.image, master_products.image) RETURNING *',
-            [company, design, finish, size, image]
+            'INSERT INTO master_products (company, design, finish, size, image) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (TRIM(LOWER(company)), TRIM(LOWER(design)), COALESCE(TRIM(LOWER(finish)), \'\'), COALESCE(TRIM(LOWER(size)), \'\')) DO UPDATE SET image = COALESCE(EXCLUDED.image, master_products.image) RETURNING *',
+            [trimmedCompany, trimmedDesign, trimmedFinish, trimmedSize, image]
         );
         res.status(201).json(mapRowsToCamelCase(result.rows)[0]);
     } catch (err) {

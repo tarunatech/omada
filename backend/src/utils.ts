@@ -15,7 +15,7 @@ export async function syncProductToMaster(client: PoolClient, item: any, source:
         const upsertResult = await client.query(`
             INSERT INTO master_products (company, design, finish, size, image)
             VALUES ($1, $2, $3, $4, $5)
-            ON CONFLICT (LOWER(company), LOWER(design), COALESCE(LOWER(finish), ''), COALESCE(LOWER(size), '')) 
+            ON CONFLICT (TRIM(LOWER(company)), TRIM(LOWER(design)), COALESCE(TRIM(LOWER(finish)), ''), COALESCE(TRIM(LOWER(size)), '')) 
             DO UPDATE SET image = COALESCE(master_products.image, EXCLUDED.image)
             RETURNING id, design
         `, [company, design, finish, size, item.image]);
@@ -38,10 +38,10 @@ export async function updateProductUsage(client: PoolClient, item: any, delta: n
         await client.query(`
             UPDATE master_products 
             SET total_quantity_used = GREATEST(0, total_quantity_used + $1)
-            WHERE LOWER(company) = LOWER($2) 
-              AND LOWER(design) = LOWER($3) 
-              AND COALESCE(LOWER(finish), '') = COALESCE(LOWER($4), '')
-              AND COALESCE(LOWER(size), '') = COALESCE(LOWER($5), '')
+            WHERE TRIM(LOWER(company)) = TRIM(LOWER($2)) 
+              AND TRIM(LOWER(design)) = TRIM(LOWER($3)) 
+              AND COALESCE(TRIM(LOWER(finish)), '') = COALESCE(TRIM(LOWER($4)), '')
+              AND COALESCE(TRIM(LOWER(size)), '') = COALESCE(TRIM(LOWER($5)), '')
         `, [delta, company, design, finish, size]);
     }
 }
