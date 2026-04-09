@@ -786,7 +786,8 @@ const OrderExportPage = () => {
                                        <button
                                          key={p.id || idx}
                                          className="w-full text-left px-4 py-2 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0"
-                                         onClick={() => {
+                                         onMouseDown={(e) => {
+                                           e.preventDefault(); // Prevent input blur before this fires
                                            updateItemFields(cat.id, item.id, {
                                              design: p.design,
                                              finish: p.finish,
