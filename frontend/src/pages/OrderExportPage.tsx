@@ -563,8 +563,16 @@ const OrderExportPage = () => {
                           <Building2 className="w-6 h-6" />
                         </div>
                         <div>
-                          <p className="text-lg font-bold text-slate-950 uppercase tracking-tight leading-none mb-2">{r.supplier}</p>
-                          <p className="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">{r.id}</p>
+                          <p className="text-lg font-bold text-slate-950 uppercase tracking-tight leading-none mb-1.5">{r.supplier}</p>
+                          <div className="flex flex-col gap-1">
+                            <p className="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest leading-none">{r.id}</p>
+                            {r.party && r.party !== '-' && (
+                              <div className="flex items-center gap-1.5">
+                                <Users className="w-3 h-3 text-primary/60" />
+                                <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{r.party}</p>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </td>
