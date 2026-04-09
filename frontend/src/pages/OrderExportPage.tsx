@@ -409,7 +409,7 @@ const OrderExportPage = () => {
 
     try {
         if (editingId) {
-            await api.put(`/quotations/${editingId}`, newRecord);
+            await api.put(`/quotations/${encodeURIComponent(editingId)}`, newRecord);
             toast.success('Order record synchronized');
         } else {
             await api.post('/quotations', newRecord);
@@ -452,7 +452,7 @@ const OrderExportPage = () => {
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this order record? This will remove it from all computers.')) {
       try {
-          await api.delete(`/quotations/${id}`);
+          await api.delete(`/quotations/${encodeURIComponent(id)}`);
           toast.success('Order record deleted from server');
           fetchOrders();
       } catch (err) {

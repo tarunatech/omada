@@ -777,11 +777,11 @@ const QuotationPage = () => {
 
         try {
             // Check if it exists to decide POST or PUT
-            const res = await api.get(`/quotations?type=OrderExport&search=${poNumber}`);
+            const res = await api.get(`/quotations?type=OrderExport&search=${encodeURIComponent(poNumber)}`);
             const existing = res.data?.find((r: any) => r.id === poNumber);
 
             if (existing) {
-                await api.put(`/quotations/${poNumber}`, poRecord);
+                await api.put(`/quotations/${encodeURIComponent(poNumber)}`, poRecord);
             } else {
                 await api.post('/quotations', poRecord);
             }
@@ -1179,7 +1179,7 @@ const QuotationPage = () => {
                                                         className="h-9 w-9 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            handleDelete(r.id);
+                                                            handleDelete(encodeURIComponent(r.id));
                                                         }}
                                                         title="Remove"
                                                     >
@@ -1839,9 +1839,9 @@ const QuotationPage = () => {
 
                             return sortedCompanyEntries.map(([key, { company, items }], index) => {
                                 const poSequence = index + 1;
-                                // Format: Quotation-[QuotationNumber]/[CompanySequence]
+                                // Format: Quotation-[QuotationNumber]-[CompanySequence]
                                 const quoteNum = selectedRecordForExport.id.replace('Q-', '');
-                                const poNumber = `Quotation-${quoteNum}/${poSequence}`;
+                                const poNumber = `Quotation-${quoteNum}-${poSequence}`;
 
                                 return (
                                     <div key={company} className="border-2 border-slate-100 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl shadow-slate-200/40 bg-white hover:border-primary/20 transition-all duration-500 group/card">
