@@ -724,10 +724,8 @@ const QuotationPage = () => {
         window.open(whatsappUrl, '_blank');
     };
 
-    const persistOrderToSystem = (company: string, items: any[], qRecord: QuotationRecord, poNumber: string) => {
-        const saved = localStorage.getItem('omada_order_records');
-        let existingRecords = saved ? JSON.parse(saved) : [];
-
+    const persistOrderToSystem = async (company: string, items: any[], qRecord: QuotationRecord, poNumber: string) => {
+        // Sync Manufacturer if new
         const syncManufacturer = async (name: string) => {
             if (!name) return;
             try {
@@ -749,40 +747,61 @@ const QuotationPage = () => {
         };
         syncManufacturer(company);
 
-        // Use the provided PO Number
-        const orderId = poNumber;
-
-        // Check if it already exists
-        const idx = existingRecords.findIndex((r: any) => r.id === orderId);
-
-        const newOrder: any = {
-            id: orderId,
-            supplier: company,
-            party: '-',
-            city: '-',
-            state: '-',
-            referParty: qRecord.id,
+        // Prepare the record for the server
+        const poRecord: any = {
+            id: poNumber,
+            customerName: qRecord.customerName, // Original customer for reference
+            companyName: company,               // The vendor/manufacturer
+            mobile: qRecord.mobile || '-',
+            salesRef: qRecord.id,                // Reference back to quote
             date: new Date().toISOString().split('T')[0],
+            grandTotal: 0,                       // POs usually don't track pricing yet
             categories: [
                 {
                     id: 'cat-1',
-                    name: 'Items from Quote ' + qRecord.id,
+                    name: 'Material Requirements',
                     items: items.map((it, i) => ({
-                        id: `${i + 1}`,
-                        size: it.size,
-                        design: it.design,
-                        qty: it.qty
+                        ...it,
+                        company: company,        // Link each item to this vendor
+                        total: 0,
+                        unitPrice: 0,
+                        multiplier: 1
                     }))
                 }
-            ]
+            ],
+            siteAddress: qRecord.siteAddress || '-',
+            referenceInfo: qRecord.referenceInfo || '-',
+            status: 'Final',
+            type: 'OrderExport'
         };
 
-        if (idx > -1) {
-            existingRecords[idx] = newOrder;
-        } else {
-            existingRecords.unshift(newOrder);
+        try {
+            // Check if it exists to decide POST or PUT
+            const res = await api.get(`/quotations?type=OrderExport&search=${poNumber}`);
+            const existing = res.data?.find((r: any) => r.id === poNumber);
+
+            if (existing) {
+                await api.put(`/quotations/${poNumber}`, poRecord);
+            } else {
+                await api.post('/quotations', poRecord);
+            }
+            console.log('Order persisted to server successfully');
+        } catch (err) {
+            console.error('Failed to persist order to server:', err);
+            toast.error('Could not sync order to central ledger');
         }
 
+        // Keep local storage as a legacy fallback
+        const saved = localStorage.getItem('omada_order_records');
+        let existingRecords = saved ? JSON.parse(saved) : [];
+        const idx = existingRecords.findIndex((r: any) => r.id === poNumber);
+        
+        const localOrder = { ...poRecord, supplier: company, party: qRecord.customerName, referParty: qRecord.id };
+        if (idx > -1) {
+            existingRecords[idx] = localOrder;
+        } else {
+            existingRecords.unshift(localOrder);
+        }
         localStorage.setItem('omada_order_records', JSON.stringify(existingRecords));
     };
 
