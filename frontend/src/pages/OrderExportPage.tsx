@@ -132,6 +132,7 @@ const OrderExportPage = () => {
   };
 
   const [masterProducts, setMasterProducts] = useState<any[]>([]);
+  const [activeSuggestion, setActiveSuggestion] = useState<{ catId: string, itemId: string } | null>(null);
 
   const fetchMasterProducts = async () => {
     try {
@@ -765,11 +766,18 @@ const OrderExportPage = () => {
                              <div className="relative">
                                <Input 
                                  value={item.design} 
-                                 onChange={e => updateItem(cat.id, item.id, 'design', e.target.value)}
+                                 onFocus={() => setActiveSuggestion({ catId: cat.id, itemId: item.id })}
+                                 onBlur={() => {
+                                   setTimeout(() => setActiveSuggestion(null), 200);
+                                 }}
+                                 onChange={e => {
+                                   updateItem(cat.id, item.id, 'design', e.target.value);
+                                   setActiveSuggestion({ catId: cat.id, itemId: item.id });
+                                 }}
                                  className="h-8 border-0 p-0 text-xs font-bold text-slate-900 bg-transparent focus-visible:ring-0 placeholder:text-slate-200 uppercase"
                                  placeholder="ITEM DESIGN"
                                />
-                               {item.design && item.design.length > 1 && (
+                               {activeSuggestion?.catId === cat.id && activeSuggestion?.itemId === item.id && item.design && item.design.length > 1 && (
                                  <div className="absolute top-full left-0 w-64 bg-white border border-slate-200 shadow-xl rounded-xl mt-1 z-[100] max-h-48 overflow-y-auto overflow-x-hidden">
                                    {masterProducts
                                      .filter(p => p.design.toLowerCase().includes(item.design.toLowerCase()))
@@ -785,6 +793,7 @@ const OrderExportPage = () => {
                                              size: p.size,
                                              image: p.image || undefined
                                            });
+                                           setActiveSuggestion(null);
                                          }}
                                        >
                                          <div className="flex items-center gap-3">
