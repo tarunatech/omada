@@ -150,19 +150,21 @@ export const createQuotation = async (req: Request, res: Response) => {
         const user = (req as any).user;
         // Server-side ID generation to prevent collisions
         let finalId = id;
-        // Force server-side ID for new orders or quotations matching prefixes
-        if (!id || id === 'AUTO_QUOTATION' || id.startsWith('Q-') || id.startsWith('S-') || id.startsWith('ORD-') || (type === 'OrderExport' && !id.startsWith('QUOTATION-'))) {
+        
+        // Check if we should generate a new server-side ID
+        const shouldGenerateId = !id || 
+            (id.startsWith('Q-') && !id.startsWith('Quotation-')) || // Only Q- (quotations), not Quotation- (exported orders)
+            id.startsWith('S-') || 
+            id.startsWith('ORD-') || 
+            (type === 'OrderExport' && !id.startsWith('Quotation-'));
+
+        if (shouldGenerateId) {
             if (type === 'Sample') {
                 const seqResult = await client.query("SELECT nextval('sample_number_seq') as num");
                 finalId = `S-${seqResult.rows[0].num}`;
             } else if (type === 'OrderExport') {
-                if (id === 'AUTO_QUOTATION') {
-                    const seqResult = await client.query("SELECT nextval('export_order_number_seq') as num");
-                    finalId = `QUOTATION-${seqResult.rows[0].num}`;
-                } else {
-                    const seqResult = await client.query("SELECT nextval('order_number_seq') as num"); 
-                    finalId = `ORD-${seqResult.rows[0].num}`;
-                }
+                const seqResult = await client.query("SELECT nextval('order_number_seq') as num"); 
+                finalId = `ORD-${seqResult.rows[0].num}`;
             } else {
                 const seqResult = await client.query("SELECT nextval('quotation_number_seq') as num");
                 finalId = `Q-${seqResult.rows[0].num}`;
