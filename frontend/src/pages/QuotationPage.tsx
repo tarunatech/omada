@@ -408,13 +408,22 @@ const QuotationPage = () => {
 
         document.body.appendChild(div);
 
-        // Wait for Inter font to be ready
+        // Wait for fonts to be ready
         try {
             await document.fonts.ready;
         } catch (e) {
-            // Fallback: brief delay if fonts.ready not supported
             await new Promise(resolve => setTimeout(resolve, 500));
         }
+
+        // IMPORTANT: Wait for all images to load before capturing canvas
+        const images = Array.from(div.getElementsByTagName('img'));
+        await Promise.all(images.map(img => {
+            if (img.complete) return Promise.resolve();
+            return new Promise(resolve => {
+                img.onload = resolve;
+                img.onerror = resolve; // Continue even if one image fails
+            });
+        }));
 
         const canvas = await html2canvas(div, {
             scale: 3,
@@ -776,14 +785,19 @@ const QuotationPage = () => {
         };
 
         try {
-            // If it's a new export, we don't have a specific ID yet, we want AUTO
-            const res = await api.post('/quotations', poRecord);
-            console.log('Order persisted to server successfully:', res.data.id);
-            return res.data.id; // Return the generated ID (e.g., QUOTATION-1001)
+            // Check if it exists to decide POST or PUT
+            const res = await api.get(`/quotations?type=OrderExport&search=${encodeURIComponent(poNumber)}`);
+            const existing = res.data?.find((r: any) => r.id === poNumber);
+
+            if (existing) {
+                await api.put(`/quotations/${encodeURIComponent(poNumber)}`, poRecord);
+            } else {
+                await api.post('/quotations', poRecord);
+            }
+            console.log('Order persisted to server successfully');
         } catch (err) {
             console.error('Failed to persist order to server:', err);
             toast.error('Could not sync order to central ledger');
-            return poNumber; // Fallback
         }
 
         // Keep local storage as a legacy fallback
@@ -800,10 +814,11 @@ const QuotationPage = () => {
         localStorage.setItem('omada_order_records', JSON.stringify(existingRecords));
     };
 
-    const handleGenerateOrderPDF = async (company: string, items: any[], record: QuotationRecord, dummyPoNumber: string) => {
-        // Persist to system first to get a real ID if needed
-        const finalPoNumber = await persistOrderToSystem(company, items, record, 'AUTO_QUOTATION');
+    const handleGenerateOrderPDF = async (company: string, items: any[], record: QuotationRecord, poNumber: string) => {
+        // Persist to system
+        persistOrderToSystem(company, items, record, poNumber);
 
+        const quotationNo = record.id;
         const dateFormatted = new Date().toLocaleDateString('en-GB');
 
         const html = `
@@ -820,7 +835,7 @@ const QuotationPage = () => {
 
           <div style="text-align: right; color: #ffffff;">
             <div style="font-size: 10px; font-weight: 900; opacity: 0.8; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 6px;">Order Reference</div>
-            <div style="font-size: 24px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 4px;">${finalPoNumber}</div>
+            <div style="font-size: 24px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 4px;">${poNumber}</div>
             <div style="font-size: 12px; opacity: 0.7; font-weight: 700;">${dateFormatted}</div>
           </div>
         </div>
@@ -907,10 +922,11 @@ const QuotationPage = () => {
         }
     };
 
-    const handleGenerateOrderImage = async (company: string, items: any[], record: QuotationRecord, dummyPoNumber: string) => {
-        // Persist to system first to find/create ID
-        const finalPoNumber = await persistOrderToSystem(company, items, record, 'AUTO_QUOTATION');
+    const handleGenerateOrderImage = async (company: string, items: any[], record: QuotationRecord, poNumber: string) => {
+        // Persist to system
+        persistOrderToSystem(company, items, record, poNumber);
 
+        const quotationNo = record.id;
         const dateFormatted = new Date().toLocaleDateString('en-GB');
 
         const html = `
@@ -927,7 +943,7 @@ const QuotationPage = () => {
 
           <div style="text-align: right; color: #ffffff;">
             <div style="font-size: 10px; font-weight: 900; opacity: 0.8; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 6px;">Order Reference</div>
-            <div style="font-size: 24px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 4px;">${finalPoNumber}</div>
+            <div style="font-size: 24px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 4px;">${poNumber}</div>
             <div style="font-size: 12px; opacity: 0.7; font-weight: 700;">${dateFormatted}</div>
           </div>
         </div>
@@ -1832,8 +1848,9 @@ const QuotationPage = () => {
 
                             return sortedCompanyEntries.map(([key, { company, items }], index) => {
                                 const poSequence = index + 1;
-                                // ID will be generated by server: Quotation-1001, Quotation-1002 etc.
-                                const poDisplay = `Quotation-#### (${poSequence})`; 
+                                // Format: Quotation-[QuotationNumber]-[CompanySequence]
+                                const quoteNum = selectedRecordForExport.id.replace('Q-', '');
+                                const poNumber = `Quotation-${quoteNum}-${poSequence}`;
 
                                 return (
                                     <div key={company} className="border-2 border-slate-100 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl shadow-slate-200/40 bg-white hover:border-primary/20 transition-all duration-500 group/card">
@@ -1854,7 +1871,7 @@ const QuotationPage = () => {
                                                     <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1 sm:mt-2">
                                                         <span className="text-[10px] sm:text-[11px] text-primary font-black uppercase tracking-[0.15em] sm:tracking-[0.2em]">Official Purchase Order</span>
                                                         <span className="hidden sm:block w-1.5 h-1.5 bg-slate-200 rounded-full" />
-                                                        <span className="text-xs sm:text-sm text-slate-900 font-black uppercase tracking-wider">PO: {poDisplay}</span>
+                                                        <span className="text-xs sm:text-sm text-slate-900 font-black uppercase tracking-wider">PO: {poNumber}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1863,7 +1880,7 @@ const QuotationPage = () => {
                                                 <Button
                                                     size="sm"
                                                     className="h-9 sm:h-11 px-4 sm:px-7 text-[10px] sm:text-xs font-black uppercase tracking-[0.1em] sm:tracking-[0.15em] bg-slate-900 text-white hover:bg-primary transition-all shadow-lg hover:shadow-primary/20 rounded-lg sm:rounded-xl"
-                                                    onClick={() => handleGenerateOrderPDF(company, items, selectedRecordForExport, 'AUTO')}
+                                                    onClick={() => handleGenerateOrderPDF(company, items, selectedRecordForExport, poNumber)}
                                                 >
                                                     <FileDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" /> PDF
                                                 </Button>
@@ -1871,7 +1888,7 @@ const QuotationPage = () => {
                                                     size="sm"
                                                     variant="outline"
                                                     className="h-9 sm:h-11 px-4 sm:px-7 text-[10px] sm:text-xs font-black uppercase tracking-[0.1em] sm:tracking-[0.15em] border-slate-200 text-slate-600 hover:bg-slate-50 transition-all rounded-lg sm:rounded-xl"
-                                                    onClick={() => handleGenerateOrderImage(company, items, selectedRecordForExport, 'AUTO')}
+                                                    onClick={() => handleGenerateOrderImage(company, items, selectedRecordForExport, poNumber)}
                                                 >
                                                     <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" /> Image
                                                 </Button>
