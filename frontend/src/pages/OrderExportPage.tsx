@@ -195,7 +195,7 @@ const OrderExportPage = () => {
   };
 
   const updateItem = (catId: string, itemId: string, field: keyof OrderItem, value: string | number) => {
-    setCategories(categories.map(c =>
+    setCategories(prev => prev.map(c =>
       c.id === catId
         ? { ...c, items: c.items.map(i => i.id === itemId ? { ...i, [field]: value } : i) }
         : c
@@ -203,7 +203,7 @@ const OrderExportPage = () => {
   };
 
   const updateItemFields = (catId: string, itemId: string, fields: Partial<OrderItem>) => {
-    setCategories(categories.map(c =>
+    setCategories(prev => prev.map(c =>
       c.id === catId
         ? { ...c, items: c.items.map(i => i.id === itemId ? { ...i, ...fields } : i) }
         : c
