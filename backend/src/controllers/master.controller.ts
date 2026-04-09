@@ -106,7 +106,7 @@ export const getMasterProducts = async (req: Request, res: Response) => {
                        FROM quotation_items qi
                        JOIN quotation_categories qc ON qi.category_id = qc.id
                        JOIN quotations q ON qc.quotation_id = q.id
-                        WHERE TRIM(LOWER(qi.company)) = TRIM(LOWER(mp.company)) 
+                        WHERE TRIM(LOWER(COALESCE(qi.company, q.company_name))) = TRIM(LOWER(mp.company)) 
                           AND TRIM(LOWER(qi.design)) = TRIM(LOWER(mp.design))
                           AND COALESCE(TRIM(LOWER(qi.finish)), '') = COALESCE(TRIM(LOWER(mp.finish)), '')
                           AND COALESCE(TRIM(LOWER(qi.size)), '') = COALESCE(TRIM(LOWER(mp.size)), '')
