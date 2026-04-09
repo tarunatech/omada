@@ -44,11 +44,21 @@ const MasterDataPage = () => {
   const [selectedCompany, setSelectedCompany] = useState<string>('all');
   const [viewHistoryOpen, setViewHistoryOpen] = useState(false);
   const [historyCompany, setHistoryCompany] = useState<string>('');
+  const [orderRecords, setOrderRecords] = useState<any[]>([]);
 
   // Form states
   const [companyForm, setCompanyForm] = useState({ name: '', type: '', contact: '', status: 'Active' });
   const [designForm, setDesignForm] = useState({ company: '', design: '', finish: '', size: '', image: null as string | null });
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const fetchOrderRecords = async () => {
+    try {
+      const res = await api.get('/quotations?type=OrderExport&limit=2000');
+      setOrderRecords(res.data || []);
+    } catch (err) {
+      console.error('Failed to fetch order records', err);
+    }
+  };
 
   const fetchCompanies = async () => {
     try {
@@ -86,6 +96,7 @@ const MasterDataPage = () => {
 
   useEffect(() => {
     fetchCompanies();
+    fetchOrderRecords();
   }, []);
 
 
