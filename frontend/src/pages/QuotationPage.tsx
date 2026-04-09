@@ -799,19 +799,6 @@ const QuotationPage = () => {
             console.error('Failed to persist order to server:', err);
             toast.error('Could not sync order to central ledger');
         }
-
-        // Keep local storage as a legacy fallback
-        const saved = localStorage.getItem('omada_order_records');
-        let existingRecords = saved ? JSON.parse(saved) : [];
-        const idx = existingRecords.findIndex((r: any) => r.id === poNumber);
-        
-        const localOrder = { ...poRecord, supplier: company, party: qRecord.customerName, referParty: qRecord.id };
-        if (idx > -1) {
-            existingRecords[idx] = localOrder;
-        } else {
-            existingRecords.unshift(localOrder);
-        }
-        localStorage.setItem('omada_order_records', JSON.stringify(existingRecords));
     };
 
     const handleGenerateOrderPDF = async (company: string, items: any[], record: QuotationRecord, poNumber: string) => {

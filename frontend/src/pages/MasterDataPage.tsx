@@ -42,7 +42,6 @@ const MasterDataPage = () => {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [viewingItem, setViewingItem] = useState<any>(null);
   const [selectedCompany, setSelectedCompany] = useState<string>('all');
-  const [orderRecords, setOrderRecords] = useState<any[]>([]);
   const [viewHistoryOpen, setViewHistoryOpen] = useState(false);
   const [historyCompany, setHistoryCompany] = useState<string>('');
 
@@ -87,48 +86,9 @@ const MasterDataPage = () => {
 
   useEffect(() => {
     fetchCompanies();
-    // Load local PO records
-    const saved = localStorage.getItem('omada_order_records');
-    if (saved) {
-      setOrderRecords(JSON.parse(saved));
-    }
   }, []);
 
-  // Auto-sync manufacturers from local PO records to DB if missing
-  useEffect(() => {
-    const syncMissing = async () => {
-      if (orderRecords.length === 0) return;
-      
-      const uniqueSuppliers = Array.from(new Set(orderRecords.map(r => r.supplier)));
-      let addedAny = false;
 
-      for (const s of uniqueSuppliers) {
-        if (!s || s.trim() === '-' || s.startsWith('ORD-')) continue;
-        
-        // Use current state to check existence
-        const exists = companies.some(c => c.name.toLowerCase() === s.toLowerCase());
-        
-        if (!exists) {
-          try {
-            await api.post('/master/companies', { 
-              name: s, 
-              type: 'Manufacturer', 
-              contact: '-',
-              status: 'Active' 
-            });
-            addedAny = true;
-          } catch (e) {
-            console.log(`Sync skipped for ${s}`);
-          }
-        }
-      }
-      if (addedAny) fetchCompanies();
-    };
-
-    // Small delay to ensure fetchCompanies has finished first
-    const timeout = setTimeout(syncMissing, 1000);
-    return () => clearTimeout(timeout);
-  }, [orderRecords.length, companies.length]);
 
   useEffect(() => {
     fetchDesigns();
