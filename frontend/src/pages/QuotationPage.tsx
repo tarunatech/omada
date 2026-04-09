@@ -1320,20 +1320,40 @@ const QuotationPage = () => {
                                 {/* Categories */}
                                 {categories.map(cat => (
                                     <div key={cat.id} className="enterprise-card p-4 md:p-6 border border-[#e2e8f0] shadow-sm bg-white mb-6">
-                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 border-b pb-2 gap-2">
-                                            <Input
-                                                value={cat.name}
-                                                onChange={e => setCategories(categories.map(c => c.id === cat.id ? { ...c, name: e.target.value } : c))}
-                                                disabled={view === 'view'}
-                                                className="font-bold text-sm uppercase tracking-wider border-0 bg-transparent p-0 h-auto focus-visible:ring-0 w-full sm:w-auto disabled:opacity-100"
-                                            />
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 border-b pb-4 gap-4">
+                                            <div className="flex-1 min-w-0">
+                                                <Input
+                                                    value={cat.name}
+                                                    onChange={e => setCategories(categories.map(c => c.id === cat.id ? { ...c, name: e.target.value } : c))}
+                                                    disabled={view === 'view'}
+                                                    className="font-black text-base uppercase tracking-wider border-0 bg-transparent p-0 h-10 focus-visible:ring-0 w-full disabled:opacity-100"
+                                                />
+                                            </div>
                                             {view !== 'view' && (
-                                                <div className="flex gap-1 self-end sm:self-auto">
-                                                    <Button variant="outline" size="sm" className="h-8 md:h-9" onClick={() => addItem(cat.id)}>
-                                                        <Plus className="w-3.5 h-3.5 mr-1" /> Item
+                                                <div className="flex items-center gap-2 shrink-0 relative z-10">
+                                                    <Button 
+                                                        type="button"
+                                                        variant="outline" 
+                                                        size="sm" 
+                                                        className="h-10 md:h-11 px-5 border-slate-200 shadow-sm active:scale-95 transition-all font-bold cursor-pointer" 
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            addItem(cat.id);
+                                                        }}
+                                                    >
+                                                        <Plus className="w-4 h-4 mr-2" /> Item
                                                     </Button>
-                                                    <Button variant="ghost" size="sm" className="h-8 md:h-9 text-muted-foreground hover:text-destructive" onClick={() => removeCategory(cat.id)}>
-                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    <Button 
+                                                        type="button"
+                                                        variant="ghost" 
+                                                        size="sm" 
+                                                        className="h-10 w-10 p-0 text-muted-foreground hover:text-destructive active:scale-95 transition-all cursor-pointer" 
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            removeCategory(cat.id);
+                                                        }}
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
                                                     </Button>
                                                 </div>
                                             )}
@@ -1533,8 +1553,8 @@ const QuotationPage = () => {
                                                                 <td className="py-2"><Input className="h-10 text-sm font-black bg-slate-50 text-right no-spinner border-primary/20 text-primary shadow-sm" type="number" value={item.total || ''} onChange={e => updateItem(cat.id, item.id, 'total', +e.target.value)} onWheel={(e) => (e.target as HTMLInputElement).blur()} disabled={view === 'view'} /></td>
                                                                 <td className="py-2">
                                                                     {view !== 'view' && (
-                                                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive transition-all" onClick={() => removeItem(cat.id, item.id)}>
-                                                                            <Trash2 className="w-3 h-3" />
+                                                                        <Button type="button" variant="ghost" size="sm" className="h-10 w-10 p-0 text-muted-foreground hover:text-destructive active:scale-95 transition-all cursor-pointer" onClick={() => removeItem(cat.id, item.id)}>
+                                                                            <Trash2 className="w-4 h-4" />
                                                                         </Button>
                                                                     )}
                                                                 </td>
@@ -1559,8 +1579,13 @@ const QuotationPage = () => {
                                 ))}
 
                                 {view !== 'view' && (
-                                    <Button variant="outline" onClick={addCategory} className="w-full border-dashed h-14 text-[#64748b] hover:bg-[#f8fafc] mb-6 font-semibold">
-                                        <Plus className="w-5 h-5 mr-2" /> Add Category Section
+                                    <Button 
+                                        type="button"
+                                        variant="outline" 
+                                        onClick={addCategory} 
+                                        className="w-full border-dashed h-16 text-[#64748b] hover:bg-[#f8fafc] mb-8 font-black uppercase tracking-widest active:scale-[0.99] transition-all shadow-sm flex items-center justify-center gap-3 cursor-pointer"
+                                    >
+                                        <Plus className="w-6 h-6" /> Add Category Section
                                     </Button>
                                 )}
 
@@ -1611,15 +1636,15 @@ const QuotationPage = () => {
                                     <div className="flex flex-col sm:flex-row gap-2">
                                         {view === 'view' ? (
                                             <>
-                                                <Button className="h-11 px-8 font-bold shadow-md shadow-primary/20" onClick={() => setView('form')}>
+                                                <Button type="button" className="h-11 px-8 font-bold shadow-md shadow-primary/20" onClick={() => setView('form')}>
                                                     <Pencil className="w-4 h-4 mr-2" /> Edit Quotation
                                                 </Button>
-                                                <Button variant="outline" className="h-11 px-6 text-[#64748b] font-semibold" onClick={() => setView('list')}>Close</Button>
+                                                <Button type="button" variant="outline" className="h-11 px-6 text-[#64748b] font-semibold" onClick={() => setView('list')}>Close</Button>
                                             </>
                                         ) : (
                                             <>
-                                                <Button className="h-11 px-8 font-bold shadow-md shadow-primary/20" onClick={handleSave}><Save className="w-4 h-4 mr-2" /> Save Quotation</Button>
-                                                <Button variant="outline" className="h-11 px-6 text-[#64748b] font-semibold" onClick={() => setView('list')}>Cancel</Button>
+                                                <Button type="button" className="h-11 px-8 font-bold shadow-md shadow-primary/20" onClick={handleSave}><Save className="w-4 h-4 mr-2" /> Save Quotation</Button>
+                                                <Button type="button" variant="outline" className="h-11 px-6 text-[#64748b] font-semibold" onClick={() => setView('list')}>Cancel</Button>
                                             </>
                                         )}
                                     </div>

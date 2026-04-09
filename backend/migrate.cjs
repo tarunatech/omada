@@ -51,9 +51,8 @@ async function migrate() {
         await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS plain_password VARCHAR(255)');
         await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS selected_department VARCHAR(50)');
 
-        console.log('Ensuring order sequences exist...');
+        console.log('Ensuring order_number_seq exists...');
         await client.query('CREATE SEQUENCE IF NOT EXISTS order_number_seq START 1001');
-        await client.query('CREATE SEQUENCE IF NOT EXISTS export_order_number_seq START 1001');
 
         await client.query('COMMIT');
         console.log('Migration successful!');
