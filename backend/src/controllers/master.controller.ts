@@ -111,6 +111,7 @@ export const getMasterProducts = async (req: Request, res: Response) => {
                          AND COALESCE(LOWER(qi.finish), '') = COALESCE(LOWER(mp.finish), '')
                          AND COALESCE(LOWER(qi.size), '') = COALESCE(LOWER(mp.size), '')
                          AND LOWER(q.status) = 'final'
+                         AND q.type = 'OrderExport'
                    ), 0) as total_quantity_used
             FROM master_products mp
         `;
