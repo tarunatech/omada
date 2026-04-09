@@ -145,6 +145,28 @@ const OrderExportPage = () => {
   const exportRef = useRef<HTMLDivElement>(null);
 
   const [categories, setCategories] = useState<OrderCategory[]>([]);
+  const [allCompanies, setAllCompanies] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        const res = await api.get('/master/companies?limit=1000');
+        setAllCompanies(res.data || []);
+      } catch (err) {
+        console.error('Failed to fetch companies for suggestions:', err);
+      }
+    };
+    fetchCompanies();
+  }, []);
+
+  const filteredCompanies = useMemo(() => {
+    if (!supplier.trim()) return [];
+    return allCompanies.filter(c => 
+      c.name.toLowerCase().includes(supplier.toLowerCase()) &&
+      c.name.toLowerCase() !== supplier.toLowerCase()
+    ).slice(0, 8);
+  }, [supplier, allCompanies]);
 
   const resetForm = () => {
     setSupplier('');
@@ -651,15 +673,47 @@ const OrderExportPage = () => {
                 <Label className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-2 block">Manufacturing Partner</Label>
                 {isExporting ? (
                   <p className="text-2xl font-black uppercase text-slate-900">{supplier || 'E.G. KAJARIA CERAMICS LTD.'}</p>
-                ) : (
-                  <Input
-                    value={supplier}
-                    onChange={e => setSupplier(e.target.value)}
-                    placeholder="e.g. KAJARIA CERAMICS LTD."
-                    className="border-0 p-0 h-auto text-2xl font-black uppercase text-slate-900 bg-transparent focus-visible:ring-0 placeholder:text-slate-200"
-                    disabled={view === 'view'}
-                  />
-                )}
+                 ) : (
+                   <div className="relative group/suggest">
+                    <Input
+                      value={supplier}
+                      onChange={e => {
+                        setSupplier(e.target.value);
+                        setShowSuggestions(true);
+                      }}
+                      onFocus={() => setShowSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                      placeholder="e.g. KAJARIA CERAMICS LTD."
+                      className="border-0 p-0 h-auto text-2xl font-black uppercase text-slate-900 bg-transparent focus-visible:ring-0 placeholder:text-slate-200 w-full"
+                      disabled={view === 'view'}
+                    />
+                    
+                    {showSuggestions && filteredCompanies.length > 0 && view !== 'view' && (
+                      <div className="absolute top-full left-0 z-[100] mt-2 w-full min-w-[300px] bg-white rounded-2xl border border-slate-100 shadow-2xl shadow-slate-200/60 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="p-2 bg-slate-50/50 border-b border-slate-100">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-3 py-1">Existing Partners In Master Data</p>
+                        </div>
+                        <div className="max-h-[250px] overflow-y-auto custom-scrollbar">
+                          {filteredCompanies.map((c) => (
+                            <button
+                              key={c.id}
+                              onClick={() => {
+                                setSupplier(c.name);
+                                setShowSuggestions(false);
+                              }}
+                              className="w-full text-left px-5 py-4 hover:bg-primary/5 transition-all flex items-center gap-4 group/item"
+                            >
+                              <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 group-hover/item:bg-primary/10 group-hover/item:text-primary group-hover/item:border-primary/20 transition-all">
+                                <Building2 className="w-4 h-4" />
+                              </div>
+                              <span className="text-sm font-bold text-slate-700 uppercase tracking-tight group-hover/item:text-primary transition-colors">{c.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                   </div>
+                 )}
                 <div className="text-[11px] text-[#855546] font-bold uppercase tracking-widest mt-1">
                   Authorized Material Supplier
                 </div>
