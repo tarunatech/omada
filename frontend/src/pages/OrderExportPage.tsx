@@ -132,7 +132,9 @@ const OrderExportPage = () => {
   };
 
   const [masterProducts, setMasterProducts] = useState<any[]>([]);
+  const [masterCompanies, setMasterCompanies] = useState<any[]>([]);
   const [activeSuggestion, setActiveSuggestion] = useState<{ catId: string, itemId: string } | null>(null);
+  const [showSupplierSuggestions, setShowSupplierSuggestions] = useState(false);
 
   const fetchMasterProducts = async () => {
     try {
@@ -143,9 +145,19 @@ const OrderExportPage = () => {
     }
   };
 
+  const fetchMasterCompanies = async () => {
+    try {
+      const res = await api.get('/master/companies');
+      setMasterCompanies(res.data || []);
+    } catch (err) {
+      console.error('Failed to fetch master companies:', err);
+    }
+  };
+
   useEffect(() => {
     fetchOrders();
     fetchMasterProducts();
+    fetchMasterCompanies();
   }, [search, currentPage]);
 
   const [supplier, setSupplier] = useState('');
@@ -673,13 +685,49 @@ const OrderExportPage = () => {
                 {isExporting ? (
                   <p className="text-2xl font-black uppercase text-slate-900">{supplier || 'E.G. KAJARIA CERAMICS LTD.'}</p>
                 ) : (
-                  <Input
-                    value={supplier}
-                    onChange={e => setSupplier(e.target.value)}
-                    placeholder="e.g. KAJARIA CERAMICS LTD."
-                    className="border-0 p-0 h-auto text-2xl font-black uppercase text-slate-900 bg-transparent focus-visible:ring-0 placeholder:text-slate-200"
-                    disabled={view === 'view'}
-                  />
+                  <div className="relative">
+                    <Input
+                      value={supplier}
+                      onFocus={() => setShowSupplierSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowSupplierSuggestions(false), 200)}
+                      onChange={e => {
+                        setSupplier(e.target.value);
+                        setShowSupplierSuggestions(true);
+                      }}
+                      placeholder="e.g. KAJARIA CERAMICS LTD."
+                      className="border-0 p-0 h-auto text-2xl font-black uppercase text-slate-900 bg-transparent focus-visible:ring-0 placeholder:text-slate-200"
+                      disabled={view === 'view'}
+                    />
+                    {showSupplierSuggestions && supplier && supplier.length > 0 && (
+                      <div className="absolute top-full left-0 w-80 bg-white border border-slate-200 shadow-2xl rounded-2xl mt-2 z-[200] max-h-60 overflow-y-auto p-2">
+                        {masterCompanies
+                          .filter(c => c.name.toLowerCase().includes(supplier.toLowerCase()))
+                          .slice(0, 10)
+                          .map((company, idx) => (
+                            <button
+                              key={company.id || idx}
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                setSupplier(company.name);
+                                setShowSupplierSuggestions(false);
+                              }}
+                              className="w-full text-left px-4 py-3 hover:bg-slate-50 rounded-xl transition-colors mb-1 last:mb-0 border-b border-slate-50 last:border-0"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center text-primary">
+                                  <Building2 className="w-4 h-4" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-black uppercase tracking-tight text-slate-900 leading-none mb-1">{company.name}</p>
+                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{company.location || 'Official Partner'}</p>
+                                </div>
+                              </div>
+                            </button>
+                          ))
+                        }
+                      </div>
+                    )}
+                  </div>
                 )}
                 <div className="text-[11px] text-[#855546] font-bold uppercase tracking-widest mt-1">
                   Authorized Material Supplier
