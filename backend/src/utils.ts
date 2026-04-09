@@ -7,15 +7,14 @@ import { PoolClient } from 'pg';
 export async function syncProductToMaster(client: PoolClient, item: any, source: string) {
     const company = item.company?.trim();
     const design = item.design?.trim();
-    const finish = item.finish?.trim() || null;
-    const size = item.size?.trim() || null;
+    const finish = item.finish?.trim() || '';
+    const size = item.size?.trim() || '';
 
     if (company && design) {
-        // We use a specific UPSERT logic that handles NULLs and casing consistently
         const upsertResult = await client.query(`
             INSERT INTO master_products (company, design, finish, size, image)
             VALUES ($1, $2, $3, $4, $5)
-            ON CONFLICT (TRIM(LOWER(company)), TRIM(LOWER(design)), COALESCE(TRIM(LOWER(finish)), ''), COALESCE(TRIM(LOWER(size)), '')) 
+            ON CONFLICT (company, design, finish, size) 
             DO UPDATE SET image = COALESCE(master_products.image, EXCLUDED.image)
             RETURNING id, design
         `, [company, design, finish, size, item.image]);
@@ -26,24 +25,11 @@ export async function syncProductToMaster(client: PoolClient, item: any, source:
 
 /**
  * Updates the total_quantity_used for a product in master_products.
+ * Currently disabled as usage is calculated dynamically in the controller.
  */
 export async function updateProductUsage(client: PoolClient, item: any, delta: number) {
-    const company = item.company?.trim();
-    const design = item.design?.trim();
-    const finish = item.finish?.trim() || null;
-    const size = item.size?.trim() || null;
-
-    if (company && design) {
-        // Optimized to use the new composite index and handle NULLs consistently
-        await client.query(`
-            UPDATE master_products 
-            SET total_quantity_used = GREATEST(0, total_quantity_used + $1)
-            WHERE TRIM(LOWER(company)) = TRIM(LOWER($2)) 
-              AND TRIM(LOWER(design)) = TRIM(LOWER($3)) 
-              AND COALESCE(TRIM(LOWER(finish)), '') = COALESCE(TRIM(LOWER($4)), '')
-              AND COALESCE(TRIM(LOWER(size)), '') = COALESCE(TRIM(LOWER($5)), '')
-        `, [delta, company, design, finish, size]);
-    }
+    // Usage is calculated on-the-fly in master.controller.ts
+    return;
 }
 
 /**
