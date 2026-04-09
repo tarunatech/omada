@@ -662,7 +662,7 @@ const OrderExportPage = () => {
            </div>
         )}
         {/* Header Info */}
-        <div className={`bg-white ${isExporting ? 'mx-10 mb-8' : ''} rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden`}>
+        <div className={`bg-white ${isExporting ? 'mx-10 mb-8' : ''} rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-visible`}>
         {!isExporting && (
           <div className="p-8 sm:p-10 border-b border-slate-100 bg-slate-50/30">
             <h3 className="text-lg font-black uppercase tracking-[0.2em] text-slate-900 flex items-center gap-3">
