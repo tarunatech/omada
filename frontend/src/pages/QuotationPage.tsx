@@ -1839,8 +1839,9 @@ const QuotationPage = () => {
 
                             return sortedCompanyEntries.map(([key, { company, items }], index) => {
                                 const poSequence = index + 1;
-                                // Format: QO-[DisplaySrNo]/[CompanySequence]
-                                const poNumber = `QO-${selectedRecordIndex}/${poSequence}`;
+                                // Format: Quotation-[QuotationNumber]/[CompanySequence]
+                                const quoteNum = selectedRecordForExport.id.replace('Q-', '');
+                                const poNumber = `Quotation-${quoteNum}/${poSequence}`;
 
                                 return (
                                     <div key={company} className="border-2 border-slate-100 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl shadow-slate-200/40 bg-white hover:border-primary/20 transition-all duration-500 group/card">

@@ -151,7 +151,8 @@ export const createQuotation = async (req: Request, res: Response) => {
         // Server-side ID generation to prevent collisions
         let finalId = id;
         // Force server-side ID for new orders or quotations matching prefixes
-        if (!id || id.startsWith('Q-') || id.startsWith('S-') || id.startsWith('ORD-') || type === 'OrderExport') {
+        // But allow 'Quotation-' prefix to pass through for exported orders
+        if (!id || (id.startsWith('Q-') || id.startsWith('S-') || id.startsWith('ORD-') || (type === 'OrderExport' && !id.startsWith('Quotation-')))) {
             if (type === 'Sample') {
                 const seqResult = await client.query("SELECT nextval('sample_number_seq') as num");
                 finalId = `S-${seqResult.rows[0].num}`;
