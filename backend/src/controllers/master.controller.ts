@@ -101,7 +101,7 @@ export const getMasterProducts = async (req: Request, res: Response) => {
         let countQuery = 'SELECT COUNT(*) FROM master_products mp';
         let dataQuery = `
             SELECT mp.id, mp.company, mp.design, mp.finish, mp.size, mp.image, mp.created_at,
-                   COALESCE((
+                   COALESCE(mp.total_quantity_used, 0) + COALESCE((
                        SELECT SUM(qi.qty::numeric)
                        FROM quotation_items qi
                        JOIN quotation_categories qc ON qi.category_id = qc.id

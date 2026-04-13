@@ -356,7 +356,7 @@ export const deleteQuotation = async (req: Request, res: Response) => {
 
         // Check if quotation exists and its status
         const itemsResult = await client.query(`
-            SELECT i.company, i.design, i.finish, i.size, i.qty, q.status 
+            SELECT i.company, i.design, i.finish, i.size, i.qty, q.status, q.type 
             FROM quotation_items i
             JOIN quotation_categories c ON i.category_id = c.id
             JOIN quotations q ON c.quotation_id = q.id
@@ -365,8 +365,23 @@ export const deleteQuotation = async (req: Request, res: Response) => {
 
         // Decrement product usage counts if it was Final
         if (itemsResult.rows.length > 0 && itemsResult.rows[0].status === 'Final') {
+            const isOrderExport = itemsResult.rows[0].type === 'OrderExport';
             for (const item of itemsResult.rows) {
-                await updateProductUsage(client, item, -parseFloat(item.qty || 0));
+                if (isOrderExport && item.company && item.design) {
+                    await client.query(`
+                        UPDATE master_products 
+                        SET total_quantity_used = COALESCE(total_quantity_used, 0) + $1
+                        WHERE company = $2 AND design = $3 AND COALESCE(finish, '') = $4 AND COALESCE(size, '') = $5
+                    `, [
+                        parseFloat(item.qty || 0), 
+                        item.company.trim(), 
+                        item.design.trim(), 
+                        item.finish?.trim() || '', 
+                        item.size?.trim() || ''
+                    ]);
+                } else {
+                    await updateProductUsage(client, item, -parseFloat(item.qty || 0));
+                }
             }
         }
 
