@@ -293,8 +293,8 @@ const OrderExportPage = () => {
     const dateStr = `ISSUED: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}`;
     doc.setFontSize(8);
     doc.setFillColor(255, 255, 255, 0.15); // Glass effect
-    doc.roundedRect(pageWidth - 70, 35, 50, 6, 3, 3, 'F');
-    doc.text(dateStr, pageWidth - 20, 39, { align: 'right', charSpace: 0.5 });
+    doc.roundedRect(pageWidth - 85, 35, 70, 7, 3.5, 3.5, 'F');
+    doc.text(dateStr, pageWidth - 20, 39.5, { align: 'right', charSpace: 0.5 });
 
     // 2. PARTNER INFO BAR (BOTTOM OF HEADER)
     doc.setFillColor(255, 255, 255);
