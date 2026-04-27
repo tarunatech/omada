@@ -278,7 +278,7 @@ const OrderExportPage = () => {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    doc.text('WORLD OF LUXURY', 15, 27, { charSpace: 1.5 });
+
 
     // Order ID & Date (Right)
     doc.setFontSize(7);
@@ -658,7 +658,7 @@ const OrderExportPage = () => {
            <div className="bg-[#855546] w-full p-12 flex justify-between items-start mb-12 border-0">
               <div className="flex flex-col gap-3">
                 <img src={omadaLogo} className="h-12 mb-1 block" alt="OMADA" />
-                <p className="text-[10px] uppercase font-bold text-white tracking-[0.3em] opacity-90">World of Luxury</p>
+
               </div>
               <div className="text-right text-white flex flex-col items-end gap-1">
                 <p className="text-[10px] uppercase font-bold tracking-[0.4em] mb-2 opacity-80">Purchase Order</p>
