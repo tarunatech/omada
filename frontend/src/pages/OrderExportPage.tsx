@@ -283,18 +283,18 @@ const OrderExportPage = () => {
     // Order ID & Date (Right)
     doc.setFontSize(7);
     doc.setTextColor(255, 255, 255);
-    doc.text('PURCHASE ORDER', pageWidth - 15, 18, { align: 'right', charSpace: 2 });
+    doc.text('PURCHASE ORDER', pageWidth - 20, 18, { align: 'right', charSpace: 1 });
     
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
-    doc.text(editingId || 'NEW-ORDER', pageWidth - 15, 30, { align: 'right' });
+    doc.text(editingId || 'NEW-ORDER', pageWidth - 20, 30, { align: 'right' });
 
     // Issued Pill
     const dateStr = `ISSUED: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}`;
     doc.setFontSize(8);
     doc.setFillColor(255, 255, 255, 0.15); // Glass effect
-    doc.roundedRect(pageWidth - 65, 35, 50, 6, 3, 3, 'F');
-    doc.text(dateStr, pageWidth - 15, 39, { align: 'right', charSpace: 1 });
+    doc.roundedRect(pageWidth - 70, 35, 50, 6, 3, 3, 'F');
+    doc.text(dateStr, pageWidth - 20, 39, { align: 'right', charSpace: 0.5 });
 
     // 2. PARTNER INFO BAR (BOTTOM OF HEADER)
     doc.setFillColor(255, 255, 255);
@@ -371,7 +371,7 @@ const OrderExportPage = () => {
           2: { cellWidth: 'auto', fontStyle: 'bold', halign: 'left' },
           3: { cellWidth: 25, halign: 'left' },
           4: { cellWidth: 25, halign: 'left' },
-          5: { cellWidth: 20, halign: 'right', fontStyle: 'bold' } 
+          5: { cellWidth: 25, halign: 'right', fontStyle: 'bold' } 
         }
       });
 
@@ -395,7 +395,7 @@ const OrderExportPage = () => {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
-    doc.text('ORDER SUMMARY', pageWidth / 2, footerY + 10, { align: 'center', charSpace: 2 });
+    doc.text('ORDER SUMMARY', pageWidth / 2, footerY + 10, { align: 'center', charSpace: 1 });
     
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
@@ -404,7 +404,7 @@ const OrderExportPage = () => {
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
     const footerText = 'OMADA HOME STUDIO   •   LUXURY MATERIAL PROCUREMENT';
-    doc.text(footerText.toUpperCase(), pageWidth / 2, footerY + 30, { align: 'center', charSpace: 1.5 });
+    doc.text(footerText.toUpperCase(), pageWidth / 2, footerY + 30, { align: 'center', charSpace: 0.5 });
 
     doc.save(`${editingId || 'PO'}_${supplier}.pdf`);
     toast.success('PDF exported successfully');
