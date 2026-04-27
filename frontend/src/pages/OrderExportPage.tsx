@@ -242,7 +242,7 @@ const OrderExportPage = () => {
       const dataUrl = await toPng(exportRef.current, {
         cacheBust: true,
         backgroundColor: '#ffffff',
-        width: 850,
+        width: 900,
         pixelRatio: 2,
         style: {
           margin: '0',
@@ -653,15 +653,15 @@ const OrderExportPage = () => {
         </div>
       </div>
 
-      <div ref={exportRef} className={`${isExporting ? 'bg-white w-[850px] !p-0 !m-0 flex flex-col overflow-hidden' : 'space-y-10'}`}>
+      <div ref={exportRef} className={`${isExporting ? 'bg-white w-[900px] !p-0 !m-0 flex flex-col overflow-hidden' : 'space-y-10'}`}>
         {isExporting && (
-           <div className="bg-[#855546] w-full p-12 flex justify-between items-start mb-12 border-0">
+           <div className="bg-[#855546] w-full p-12 pr-16 flex justify-between items-start mb-12 border-0">
               <div className="flex flex-col gap-3">
                 <img src={omadaLogo} className="h-12 mb-1 block" alt="OMADA" />
 
               </div>
               <div className="text-right text-white flex flex-col items-end gap-1">
-                <p className="text-[10px] uppercase font-bold tracking-[0.4em] mb-2 opacity-80">Purchase Order</p>
+                <p className="text-[10px] uppercase font-bold tracking-[0.2em] mb-2 opacity-80">Purchase Order</p>
                 <div className="text-4xl font-black tracking-tighter mb-2">{editingId || 'NEW-ORDER'}</div>
                 <p className="text-[11px] font-bold opacity-80 uppercase tracking-[0.15em] bg-white/10 px-3 py-1 rounded-full">
                   Issued: {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
@@ -765,7 +765,7 @@ const OrderExportPage = () => {
                       <th className="py-4 px-4 text-left border border-[#764a3d] rounded-none">DESIGN</th>
                       <th className="w-32 py-4 px-4 text-left border border-[#764a3d] rounded-none">FINISH</th>
                       <th className="w-32 py-4 px-4 text-left border border-[#764a3d] rounded-none">SIZE</th>
-                      <th className="w-24 py-4 px-4 text-right border border-[#764a3d] rounded-none">QUANTITY</th>
+                      <th className="w-32 py-4 px-4 text-right border border-[#764a3d] rounded-none">QUANTITY</th>
                       {!isExporting && view !== 'view' && <th className="w-16 py-4 px-4 text-right border border-[#764a3d] rounded-none"></th>}
                     </tr>
                   </thead>
@@ -995,7 +995,7 @@ const OrderExportPage = () => {
                 <h2 className="text-2xl font-black text-white mb-3">
                   Total Material Count: {categorySummary.reduce((sum, s) => sum + s.totalQty, 0).toLocaleString()} Boxes
                 </h2>
-                <div className="flex items-center justify-center gap-4 text-[9px] font-bold text-white/40 uppercase tracking-[0.2em]">
+                <div className="flex items-center justify-center gap-4 text-[9px] font-bold text-white/40 uppercase tracking-[0.1em]">
                   <span>Omada Home Studio</span>
                   <div className="w-1 h-1 rounded-full bg-white/20" />
                   <span>Luxury Material Procurement</span>
