@@ -44,8 +44,19 @@ const AppLayout = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(window.innerWidth < 1100);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Collapse sidebar on small screens (iPad portrait / iPad Pro portrait)
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1100) {
+        setCollapsed(true);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const { dueToday } = useFollowUpNotifications();
 
   const filteredMenu = menuItems.filter(item => user && item.roles.includes(user.role));

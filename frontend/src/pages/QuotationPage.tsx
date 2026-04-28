@@ -1224,8 +1224,8 @@ const QuotationPage = () => {
                         </div>
                     </div>
 
-                    <div className={`grid gap-10 ${showPreview ? 'lg:grid-cols-5' : 'grid-cols-1'}`}>
-                        <div className={showPreview ? 'lg:col-span-3' : ''}>
+                    <div className={`grid gap-10 ${showPreview ? 'xl:grid-cols-5' : 'grid-cols-1'}`}>
+                        <div className={showPreview ? 'xl:col-span-3' : ''}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
                                 <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-xl shadow-slate-200/40 relative overflow-hidden h-full">
                                     <h3 className="text-[14px] font-black uppercase tracking-[0.15em] text-slate-700 mb-8 flex items-center gap-2">
@@ -1246,7 +1246,7 @@ const QuotationPage = () => {
                                             <Input value={companyName} onChange={e => setCompanyName(e.target.value)} disabled={view === 'view'} className="h-12 px-5 rounded-2xl bg-slate-50/50 border-slate-100 focus:bg-white focus:ring-4 focus:ring-primary/5 transition-all font-black text-slate-900 uppercase tracking-tight" placeholder="Enter company name..." />
                                         </div>
                                     </div>
-                                    <div className="absolute top-0 right-0 p-8 opacity-5">
+                                    <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
                                         <Users className="w-16 h-16" />
                                     </div>
                                 </div>
@@ -1330,7 +1330,7 @@ const QuotationPage = () => {
                                                 />
                                             </div>
                                             {view !== 'view' && (
-                                                <div className="flex items-center gap-2 shrink-0 relative z-10">
+                                                <div className="flex items-center gap-2 shrink-0 relative">
                                                     <Button 
                                                         type="button"
                                                         variant="outline" 
@@ -1360,8 +1360,8 @@ const QuotationPage = () => {
                                         </div>
 
                                         {cat.items.length > 0 && (
-                                            <div className="overflow-x-auto -mx-4 md:mx-0">
-                                                <table className="data-table min-w-full [&_td]:px-2 [&_th]:px-2">
+                                            <div className="overflow-x-auto md:mx-0">
+                                                <table className="data-table min-w-full [&_td]:px-3 [&_th]:px-3">
                                                     <thead>
                                                         <tr className="text-slate-900 text-[11px] uppercase font-black tracking-widest border-b-2 border-slate-100">
                                                             <th className="w-[40px] text-center pb-3">#</th>
@@ -1387,9 +1387,9 @@ const QuotationPage = () => {
                                                                             <img src={item.image} alt="Design" className="w-10 h-10 rounded object-cover border" />
                                                                             <button
                                                                                 onClick={() => updateItem(cat.id, item.id, 'image', null)}
-                                                                                className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-white rounded-full flex items-center justify-center transition-all"
+                                                                                className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center transition-all shadow-md active:scale-110 z-20"
                                                                             >
-                                                                                <X className="w-2 h-2" />
+                                                                                <X className="w-3 h-3" />
                                                                             </button>
                                                                         </div>
                                                                     ) : (
@@ -1632,7 +1632,7 @@ const QuotationPage = () => {
                                 </div>
 
                                 {/* Action Buttons */}
-                                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between p-4 bg-[#f8fafc] rounded-xl border border-[#e2e8f0] gap-4 mt-10">
+                                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between p-4 bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200 gap-4 mt-10 sticky bottom-6 shadow-2xl z-40">
                                     <div className="flex flex-col sm:flex-row gap-2">
                                         {view === 'view' ? (
                                             <>
@@ -1698,8 +1698,8 @@ const QuotationPage = () => {
 
                         {/* Preview Panel */}
                         {showPreview && (
-                            <div className="lg:col-span-2">
-                                <div className="enterprise-card sticky top-24 bg-white border border-[#e2e8f0] shadow-xl p-6 md:p-8 rounded-2xl overflow-hidden">
+                            <div className="xl:col-span-2">
+                                <div className="enterprise-card xl:sticky xl:top-24 bg-white border border-[#e2e8f0] shadow-xl p-6 md:p-8 rounded-2xl overflow-hidden">
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none" />
 
                                     <div className="relative">
