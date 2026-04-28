@@ -1012,7 +1012,7 @@ const QuotationPage = () => {
 
 
     return (
-        <div className="space-y-10 pb-20">
+        <div className="space-y-10 pb-40">
             {view === 'list' ? (
                 <>
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 mb-4">
@@ -1631,24 +1631,24 @@ const QuotationPage = () => {
                                 </div>
 
                                 {/* Action Buttons */}
-                                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between p-4 bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200 gap-4 mt-10 sticky bottom-6 shadow-2xl z-40">
+                                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between p-6 bg-white rounded-2xl border border-slate-200 gap-4 mt-10 shadow-xl relative z-[100]">
                                     <div className="flex flex-col sm:flex-row gap-2">
                                         {view === 'view' ? (
                                             <>
-                                                <Button type="button" className="h-11 px-8 font-bold shadow-md shadow-primary/20" onClick={() => setView('form')}>
+                                                <Button type="button" className="h-11 px-8 font-bold shadow-md shadow-primary/20 relative z-[110]" onClick={() => { console.log('Edit clicked'); setView('form'); }}>
                                                     <Pencil className="w-4 h-4 mr-2" /> Edit Quotation
                                                 </Button>
-                                                <Button type="button" variant="outline" className="h-11 px-6 text-[#64748b] font-semibold" onClick={() => setView('list')}>Close</Button>
+                                                <Button type="button" variant="outline" className="h-11 px-6 text-[#64748b] font-semibold relative z-[110]" onClick={() => { console.log('Close clicked'); setView('list'); }}>Close</Button>
                                             </>
                                         ) : (
                                             <>
-                                                <Button type="button" className="h-11 px-8 font-bold shadow-md shadow-primary/20" onClick={handleSave}><Save className="w-4 h-4 mr-2" /> Save Quotation</Button>
-                                                <Button type="button" variant="outline" className="h-11 px-6 text-[#64748b] font-semibold" onClick={() => setView('list')}>Cancel</Button>
+                                                <Button type="button" className="h-11 px-8 font-bold shadow-md shadow-primary/20 relative z-[110]" onClick={() => { console.log('Save clicked'); handleSave(); }}><Save className="w-4 h-4 mr-2" /> Save Quotation</Button>
+                                                <Button type="button" variant="outline" className="h-11 px-6 text-[#64748b] font-semibold relative z-[110]" onClick={() => { console.log('Cancel clicked'); setView('list'); }}>Cancel</Button>
                                             </>
                                         )}
                                     </div>
                                     <div className="flex flex-col sm:flex-row gap-2">
-                                        <Button variant="outline" className="h-11 text-[#1e293b] font-bold border-slate-300 bg-white hover:bg-slate-50" onClick={() => handleGeneratePDF()}><FileDown className="w-4 h-4 mr-2 text-primary" /> PDF</Button>
+                                        <Button variant="outline" className="h-11 text-[#1e293b] font-bold border-slate-300 bg-white hover:bg-slate-50 relative z-[110]" onClick={() => { console.log('PDF clicked'); handleGeneratePDF(); }}><FileDown className="w-4 h-4 mr-2 text-primary" /> PDF</Button>
                                         <Button
                                             variant="outline"
                                             className="h-11 text-emerald-700 font-bold border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50"
