@@ -1012,7 +1012,7 @@ const QuotationPage = () => {
 
 
     return (
-        <div className="space-y-10 animate-in fade-in duration-700 pb-20">
+        <div className="space-y-10 pb-20">
             {view === 'list' ? (
                 <>
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 mb-4">
@@ -1335,9 +1335,8 @@ const QuotationPage = () => {
                                                         type="button"
                                                         variant="outline" 
                                                         size="sm" 
-                                                        className="h-10 md:h-11 px-5 border-slate-200 shadow-sm active:scale-95 transition-all font-bold cursor-pointer" 
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
+                                                        className="h-10 md:h-11 px-5 border-slate-200 shadow-sm font-bold cursor-pointer" 
+                                                        onClick={() => {
                                                             addItem(cat.id);
                                                         }}
                                                     >
@@ -1347,7 +1346,7 @@ const QuotationPage = () => {
                                                         type="button"
                                                         variant="ghost" 
                                                         size="sm" 
-                                                        className="h-10 w-10 p-0 text-muted-foreground hover:text-destructive active:scale-95 transition-all cursor-pointer" 
+                                                        className="h-10 w-10 p-0 text-muted-foreground hover:text-destructive cursor-pointer" 
                                                         onClick={(e) => {
                                                             e.preventDefault();
                                                             removeCategory(cat.id);
@@ -1553,7 +1552,7 @@ const QuotationPage = () => {
                                                                 <td className="py-2"><Input className="h-10 text-sm font-black bg-slate-50 text-right no-spinner border-primary/20 text-primary shadow-sm" type="number" value={item.total || ''} onChange={e => updateItem(cat.id, item.id, 'total', +e.target.value)} onWheel={(e) => (e.target as HTMLInputElement).blur()} disabled={view === 'view'} /></td>
                                                                 <td className="py-2">
                                                                     {view !== 'view' && (
-                                                                        <Button type="button" variant="ghost" size="sm" className="h-10 w-10 p-0 text-muted-foreground hover:text-destructive active:scale-95 transition-all cursor-pointer" onClick={() => removeItem(cat.id, item.id)}>
+                                                                        <Button type="button" variant="ghost" size="sm" className="h-10 w-10 p-0 text-muted-foreground hover:text-destructive cursor-pointer" onClick={() => removeItem(cat.id, item.id)}>
                                                                             <Trash2 className="w-4 h-4" />
                                                                         </Button>
                                                                     )}

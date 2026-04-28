@@ -220,7 +220,7 @@ const AppLayout = () => {
       </div>
 
       {/* Desktop Sidebar */}
-      <aside className={`${collapsed ? 'w-[72px]' : 'w-[260px]'} hidden md:flex flex-col shrink-0 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] z-10 sticky top-0 h-screen overflow-hidden`}
+      <aside className={`${collapsed ? 'w-[72px]' : 'w-[260px]'} hidden md:flex flex-col shrink-0 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] z-30 sticky top-0 h-screen overflow-hidden`}
         style={{ backgroundColor: 'hsl(224, 71%, 8%)' }}
       >
         <NavContent />
