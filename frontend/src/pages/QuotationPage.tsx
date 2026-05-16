@@ -639,7 +639,7 @@ const QuotationPage = () => {
                                     <div style="height: 1px; background: #F5F5F5; width: 100%; margin: 5px 0 10px 0;"></div>
                                     <div>
                                         <div style="font-size: 8px; font-weight: 950; color: ${style.accent}; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 2px;">Total Line Value</div>
-                                        <div style="font-size: 19px; font-weight: 1000; color: #000;">₹${Math.round(item.total).toLocaleString()}</div>
+                                        <div style="font-size: 19px; font-weight: 1000; color: #000;">₹${item.total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                     </div>
                                 </div>
                             </div>
@@ -658,15 +658,15 @@ const QuotationPage = () => {
                          <table style="width: 100%; border-collapse: collapse;">
                              <tr>
                                  <td style="font-size: 11px; color: #475569; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; padding: 4px 0;">Basis Total</td>
-                                 <td style="font-size: 11px; color: #000000; font-weight: 900; text-align: right; padding: 4px 0;">₹${Math.round(subtotal).toLocaleString('en-IN')}</td>
+                                 <td style="font-size: 11px; color: #000000; font-weight: 900; text-align: right; padding: 4px 0;">₹${subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                              </tr>
                              <tr>
                                  <td style="font-size: 11px; color: #475569; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; padding: 4px 0;">CGST (9%)</td>
-                                 <td style="font-size: 11px; color: #000000; font-weight: 900; text-align: right; padding: 4px 0;">₹${Math.round(cgst).toLocaleString('en-IN')}</td>
+                                 <td style="font-size: 11px; color: #000000; font-weight: 900; text-align: right; padding: 4px 0;">₹${cgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                              </tr>
                              <tr>
                                  <td style="font-size: 11px; color: #475569; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; padding: 4px 0;">SGST (9%)</td>
-                                 <td style="font-size: 11px; color: #000000; font-weight: 900; text-align: right; padding: 4px 0;">₹${Math.round(sgst).toLocaleString('en-IN')}</td>
+                                 <td style="font-size: 11px; color: #000000; font-weight: 900; text-align: right; padding: 4px 0;">₹${sgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                              </tr>
                          </table>
                     </div>
@@ -686,7 +686,7 @@ const QuotationPage = () => {
                    <!-- Center Amount -->
                    <div style="display: flex; align-items: baseline; justify-content: center; margin-top: 10px;">
                       <span style="font-size: 18px; color: #855546; margin-right: 6px; font-weight: 900;">₹</span>
-                      <span style="font-size: 36px; font-weight: 1000; letter-spacing: -1px; color: #ffffff;">${Math.round(totalCost).toLocaleString('en-IN')}</span>
+                      <span style="font-size: 36px; font-weight: 1000; letter-spacing: -1px; color: #ffffff;">${totalCost.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                    </div>
               </div>
             </div>
@@ -727,7 +727,7 @@ const QuotationPage = () => {
     };
 
     const handleWhatsAppShare = (record: QuotationRecord) => {
-        const message = `Hello ${record.customerName}, here is your quotation ${record.id} from OMADA HOME STUDIO. Total amount: ₹${(Number(record.grandTotal) || 0).toLocaleString()}.`;
+        const message = `Hello ${record.customerName}, here is your quotation ${record.id} from OMADA HOME STUDIO. Total amount: ₹${(Number(record.grandTotal) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`;
         const encodedMessage = encodeURIComponent(message);
         const whatsappUrl = `https://wa.me/${record.mobile.replace(/\D/g, '')}?text=${encodedMessage}`;
         window.open(whatsappUrl, '_blank');
@@ -1221,6 +1221,11 @@ const QuotationPage = () => {
                             <Button variant="outline" className="h-12 px-6 rounded-2xl border-slate-200 text-slate-600 font-bold uppercase tracking-widest text-[10px] shadow-sm hover:bg-slate-50 transition-all" onClick={() => setShowPreview(!showPreview)}>
                                 <Eye className="w-4 h-4 mr-2" /> {showPreview ? 'Deactivate Live Lens' : 'Activate Live Lens'}
                             </Button>
+                            {view !== 'view' && (
+                                <Button className="h-12 px-8 rounded-2xl bg-blue-600 text-white font-black uppercase tracking-widest text-[13px] shadow-xl shadow-blue-200/50" onClick={() => handleSave()}>
+                                    <Save className="w-4 h-4 mr-2" /> SAVE NOW
+                                </Button>
+                            )}
                         </div>
                     </div>
 
@@ -1606,15 +1611,15 @@ const QuotationPage = () => {
                                         <div className="flex flex-col gap-2 mb-4 text-[12px] font-bold text-slate-500 uppercase tracking-widest">
                                             <div className="flex justify-between">
                                                 <span>Subtotal</span>
-                                                <span className="text-slate-700">₹{Math.round(grandTotalValue).toLocaleString()}</span>
+                                                <span className="text-slate-700">₹{grandTotalValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span>CGST (9%)</span>
-                                                <span className="text-slate-700">₹{Math.round(grandTotalValue * 0.09).toLocaleString()}</span>
+                                                <span className="text-slate-700">₹{(grandTotalValue * 0.09).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span>SGST (9%)</span>
-                                                <span className="text-slate-700">₹{Math.round(grandTotalValue * 0.09).toLocaleString()}</span>
+                                                <span className="text-slate-700">₹{(grandTotalValue * 0.09).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                             </div>
                                         </div>
                                     )}
@@ -1625,7 +1630,7 @@ const QuotationPage = () => {
                                             <span className="text-[11px] font-bold text-slate-500 italic">Net Estimate Value</span>
                                         </div>
                                         <div className="text-right">
-                                            <span className="text-3xl font-black text-slate-900 tracking-tighter">₹{Math.round(finalTotalValue).toLocaleString()}</span>
+                                            <span className="text-3xl font-black text-slate-900 tracking-tighter">₹{finalTotalValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1744,7 +1749,7 @@ const QuotationPage = () => {
                                                                     </div>
                                                                 </div>
                                                                 <div className="text-right flex flex-col items-end">
-                                                                    <span className="font-black text-[12px] text-slate-900 leading-none">₹{(item.total || 0).toLocaleString()}</span>
+                                                                    <span className="font-black text-[12px] text-slate-900 leading-none">₹{(item.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                                                     <span className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">{item.qty} Boxes</span>
                                                                 </div>
                                                             </div>
@@ -1769,19 +1774,19 @@ const QuotationPage = () => {
 
                                             {includeGst && (
                                                 <div className="relative z-10 w-full flex flex-col gap-1 border border-black rounded-lg p-4 bg-[#FAF3F0] mb-1">
-                                                    <div className="flex justify-between text-[11px] text-[#475569] font-black uppercase tracking-widest">
-                                                        <span>Subtotal</span>
-                                                        <span className="text-black">₹{Math.round(grandTotalValue).toLocaleString()}</span>
-                                                    </div>
-                                                    <div className="flex justify-between text-[11px] text-[#475569] font-black uppercase tracking-widest">
-                                                        <span>CGST (9%)</span>
-                                                        <span className="text-black">₹{Math.round(grandTotalValue * 0.09).toLocaleString()}</span>
-                                                    </div>
-                                                    <div className="flex justify-between text-[11px] text-[#475569] font-black uppercase tracking-widest">
-                                                        <span>SGST (9%)</span>
-                                                        <span className="text-black">₹{Math.round(grandTotalValue * 0.09).toLocaleString()}</span>
-                                                    </div>
-                                                </div>
+                                                     <div className="flex justify-between text-[11px] text-[#475569] font-black uppercase tracking-widest">
+                                                         <span>Subtotal</span>
+                                                         <span className="text-black">₹{grandTotalValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                     </div>
+                                                     <div className="flex justify-between text-[11px] text-[#475569] font-black uppercase tracking-widest">
+                                                         <span>CGST (9%)</span>
+                                                         <span className="text-black">₹{(grandTotalValue * 0.09).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                     </div>
+                                                     <div className="flex justify-between text-[11px] text-[#475569] font-black uppercase tracking-widest">
+                                                         <span>SGST (9%)</span>
+                                                         <span className="text-black">₹{(grandTotalValue * 0.09).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                     </div>
+                                                 </div>
                                             )}
 
                                             <div className="flex justify-between items-end relative z-10 w-full mt-1 border-t border-white/20 pt-3">
@@ -1790,7 +1795,7 @@ const QuotationPage = () => {
                                                     <span className="text-[10px] font-bold text-white/50 italic">Verified Selection</span>
                                                 </div>
                                                 <div className="text-right">
-                                                    <span className="text-[20px] font-black tracking-tighter">₹{Math.round(finalTotalValue).toLocaleString()}</span>
+                                                    <span className="text-[20px] font-black tracking-tighter">₹{finalTotalValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                                     <span className="text-[8px] font-bold text-white/50 tracking-widest uppercase block mt-[-2px]">Final Estimate</span>
                                                 </div>
                                             </div>
