@@ -624,7 +624,7 @@ const QuotationPage = () => {
                                     <div style="display: flex; justify-content: flex-end; align-items: baseline; gap: 8px; margin-bottom: 8px;">
                                         <div style="text-align: right;">
                                             <div style="font-size: 8px; font-weight: 900; color: #AAA; text-transform: uppercase; letter-spacing: 1px;">Unit Price</div>
-                                            <div style="font-size: 13px; font-weight: 900; color: #333;">₹${item.unitPrice.toLocaleString()}</div>
+                                            <div style="font-size: 13px; font-weight: 900; color: #333;">₹${item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                         </div>
                                         <div style="text-align: right; border-left: 1px dotted #DDD; padding-left: 10px;">
                                             <div style="font-size: 8px; font-weight: 900; color: #AAA; text-transform: uppercase; letter-spacing: 1px;">Qty</div>
@@ -1113,7 +1113,7 @@ const QuotationPage = () => {
                                                 </Button>
                                             </td>
                                             <td className="py-4 px-6 text-right font-bold text-slate-950 tabular-nums">
-                                                ₹{(Number(r.grandTotal) || 0).toLocaleString()}
+                                                ₹{(Number(r.grandTotal) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </td>
                                             <td className="py-4 px-6 text-left text-slate-700 font-medium truncate hidden xl:table-cell">{r.salesRef || '-'}</td>
                                             <td className="py-4 px-6">
@@ -1577,7 +1577,7 @@ const QuotationPage = () => {
 
                                         <div className="text-right mt-4 pt-4 border-t border-[#f1f5f9] text-sm font-extrabold">
                                             <span className="text-[#94a3b8] uppercase text-[10px] tracking-widest mr-2">Category Total:</span>
-                                            <span className="text-primary text-base">₹{cat.items.reduce((s, i) => s + (Number(i.total) || 0), 0).toLocaleString()}</span>
+                                            <span className="text-primary text-base">₹{cat.items.reduce((s, i) => s + (Number(i.total) || 0), 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                         </div>
                                     </div>
                                 ))}
