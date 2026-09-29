@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Plus, Trash2, FileDown, Share2, Save, Eye, Pencil, ImagePlus, X, ArrowLeft, Search, LayoutList, Users } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -12,6 +13,7 @@ import { Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { globalSearch } from '@/lib/utils';
 import { CustomPagination } from '@/components/CustomPagination';
+import { useDebounce } from '@/hooks/useDebounce';
 
 interface SampleItem {
     id: string;
@@ -44,6 +46,7 @@ interface SampleRecord {
 const SampleManagementPage = () => {
     const [view, setView] = useState<'list' | 'form' | 'view'>('list');
     const [search, setSearch] = useState('');
+    const debouncedSearch = useDebounce(search, 400);
     const [loading, setLoading] = useState(true);
     const [records, setRecords] = useState<SampleRecord[]>([]);
 
@@ -56,9 +59,10 @@ const SampleManagementPage = () => {
     const fetchSamples = async () => {
         try {
             setLoading(true);
-            const data = await api.get(`/quotations?type=Sample&page=${currentPage}&limit=${itemsPerPage}&search=${search}`);
+            const searchParam = debouncedSearch.trim() ? `&search=${encodeURIComponent(debouncedSearch.trim())}` : '';
+            const data = await api.get(`/quotations?type=Sample&page=${currentPage}&limit=${itemsPerPage}${searchParam}`);
             setRecords(data.data || []);
-            setTotalPages(data.pagination.totalPages || 1);
+            setTotalPages(data.pagination?.totalPages || 1);
         } catch (err) {
             toast.error('Failed to fetch samples');
         } finally {
@@ -81,8 +85,14 @@ const SampleManagementPage = () => {
     };
 
     useEffect(() => {
+        if (currentPage !== 1) {
+            setCurrentPage(1);
+        }
+    }, [debouncedSearch]);
+
+    useEffect(() => {
         fetchSamples();
-    }, [currentPage, search]);
+    }, [currentPage, debouncedSearch]);
 
     useEffect(() => {
         fetchMasterData();
@@ -122,10 +132,11 @@ const SampleManagementPage = () => {
     };
 
     const updateItem = (catId: string, itemId: string, field: keyof SampleItem, value: any) => {
+        const formattedValue = (typeof value === 'string' && field !== 'image' && field !== 'id') ? value.toUpperCase() : value;
         setCategories(categories.map(c =>
             c.id === catId
                 ? {
-                    ...c, items: c.items.map(i => i.id === itemId ? { ...i, [field]: value } : i)
+                    ...c, items: c.items.map(i => i.id === itemId ? { ...i, [field]: formattedValue } : i)
                 }
                 : c
         ));
@@ -153,13 +164,21 @@ const SampleManagementPage = () => {
 
         const newRecord: SampleRecord = {
             id: finalId,
-            customerName,
-            mobile,
-            salesRef,
+            customerName: customerName.trim().toUpperCase(),
+            mobile: mobile.trim(),
+            salesRef: salesRef.trim().toUpperCase(),
             date: new Date().toISOString().split('T')[0],
-            categories,
-            siteAddress,
-            referenceInfo,
+            categories: categories.map(c => ({
+                ...c,
+                name: c.name.trim().toUpperCase(),
+                items: c.items.map(i => ({
+                    ...i,
+                    company: (i.company || '').trim().toUpperCase(),
+                    design: (i.design || '').trim().toUpperCase()
+                }))
+            })),
+            siteAddress: siteAddress.trim().toUpperCase(),
+            referenceInfo: referenceInfo.trim().toUpperCase(),
             customerLogo,
             status: editingId ? (records.find(r => r.id === editingId)?.status || 'Pending') : 'Pending',
             type: 'Sample'
@@ -182,14 +201,44 @@ const SampleManagementPage = () => {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this sample record?')) return;
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [deletePassword, setDeletePassword] = useState('');
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const promptDelete = (id: string) => {
+        setDeletingId(id);
+        setDeletePassword('');
+        setDeleteModalOpen(true);
+    };
+
+    const handleConfirmDelete = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!deletingId) return;
+        if (!deletePassword) {
+            toast.error('Please enter the administrator password');
+            return;
+        }
+        if (deletePassword !== 'admin123') {
+            toast.error('Incorrect password. Cannot delete sample record.');
+            return;
+        }
         try {
-            await api.delete(`/quotations/${id}`);
-            setRecords(records.filter(r => r.id !== id));
-            toast.success('Sample record deleted');
-        } catch (err) {
-            toast.error('Failed to delete sample record');
+            setIsDeleting(true);
+            await api.delete(`/quotations/${encodeURIComponent(deletingId)}`, {
+                headers: { 'x-admin-password': deletePassword }
+            });
+            setRecords(prev => prev.filter(r => r.id !== deletingId));
+            toast.success('Sample record deleted successfully');
+            setDeleteModalOpen(false);
+            setDeletingId(null);
+            setDeletePassword('');
+            fetchSamples();
+            fetchMasterData();
+        } catch (err: any) {
+            toast.error(err?.message || 'Failed to delete sample record');
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -381,10 +430,20 @@ const SampleManagementPage = () => {
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <Input
                                 placeholder="Search samples..."
-                                className="pl-11 bg-white border-slate-200 h-12 rounded-2xl shadow-xl shadow-slate-200/40 font-bold"
+                                className="pl-11 pr-10 bg-white border-slate-200 h-12 rounded-2xl shadow-xl shadow-slate-200/40 font-bold"
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
                             />
+                            {search && (
+                                <button
+                                    type="button"
+                                    onClick={() => setSearch('')}
+                                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-lg transition-colors"
+                                    title="Clear search"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -402,27 +461,37 @@ const SampleManagementPage = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {paginatedRecords.map((r, index) => (
-                                        <tr key={r.id} className="hover:bg-indigo-50/30 transition-all border-b border-slate-50">
-                                            <td className="py-4 px-6 text-center text-slate-600 font-black tabular-nums">
-                                                {(currentPage - 1) * itemsPerPage + index + 1}
-                                            </td>
-                                            <td className="py-4 px-6 text-left font-black text-slate-950 tracking-tight underline decoration-indigo-200 underline-offset-4 cursor-pointer" onClick={() => handleView(r)}>{r.customerName}</td>
-                                            <td className="py-4 px-6 text-left text-slate-900 font-black tracking-tighter">{r.mobile}</td>
-                                            <td className="py-4 px-6 text-left text-slate-900 font-bold">{r.date && !isNaN(new Date(r.date).getTime()) ? format(new Date(r.date), 'dd/MM/yyyy') : (r.date || '-')}</td>
-                                            <td className="py-4 px-6 text-left text-slate-900 font-bold">{r.salesRef}</td>
-                                            <td className="py-4 px-6">
+                                    {loading ? (
+                                        <tr>
+                                            <td colSpan={6} className="text-center py-20 text-slate-400">
                                                 <div className="flex items-center justify-center gap-2">
-                                                    <Button variant="ghost" size="icon" className="text-indigo-600 hover:bg-indigo-50" onClick={() => handleView(r)}><Eye className="w-4 h-4" /></Button>
-                                                    <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100" onClick={() => handleGeneratePDF(r)}><FileDown className="w-4 h-4" /></Button>
-                                                    <Button variant="ghost" size="icon" className="text-emerald-600 hover:bg-emerald-50" onClick={() => handleEdit(r)}><Pencil className="w-4 h-4" /></Button>
-                                                    <Button variant="ghost" size="icon" className="text-rose-500 hover:bg-rose-50" onClick={() => handleDelete(r.id)}><Trash2 className="w-4 h-4" /></Button>
+                                                    <Loader2 className="w-5 h-5 animate-spin text-indigo-600" />
+                                                    <span className="font-semibold text-sm">Searching samples...</span>
                                                 </div>
                                             </td>
                                         </tr>
-                                    ))}
-                                    {paginatedRecords.length === 0 && (
-                                        <tr><td colSpan={6} className="text-center py-24 text-slate-500 italic font-black text-lg">No sample records found. Start by creating one.</td></tr>
+                                    ) : paginatedRecords.length > 0 ? (
+                                        paginatedRecords.map((r, index) => (
+                                            <tr key={r.id} className="hover:bg-indigo-50/30 transition-all border-b border-slate-50">
+                                                <td className="py-4 px-6 text-center text-slate-600 font-black tabular-nums">
+                                                    {(currentPage - 1) * itemsPerPage + index + 1}
+                                                </td>
+                                                <td className="py-4 px-6 text-left font-black text-slate-950 tracking-tight underline decoration-indigo-200 underline-offset-4 cursor-pointer" onClick={() => handleView(r)}>{r.customerName}</td>
+                                                <td className="py-4 px-6 text-left text-slate-900 font-black tracking-tighter">{r.mobile}</td>
+                                                <td className="py-4 px-6 text-left text-slate-900 font-bold">{r.date && !isNaN(new Date(r.date).getTime()) ? format(new Date(r.date), 'dd/MM/yyyy') : (r.date || '-')}</td>
+                                                <td className="py-4 px-6 text-left text-slate-900 font-bold">{r.salesRef}</td>
+                                                <td className="py-4 px-6">
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <Button variant="ghost" size="icon" className="text-indigo-600 hover:bg-indigo-50" onClick={() => handleView(r)}><Eye className="w-4 h-4" /></Button>
+                                                        <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100" onClick={() => handleGeneratePDF(r)}><FileDown className="w-4 h-4" /></Button>
+                                                        <Button variant="ghost" size="icon" className="text-emerald-600 hover:bg-emerald-50" onClick={() => handleEdit(r)}><Pencil className="w-4 h-4" /></Button>
+                                                        <Button variant="ghost" size="icon" className="text-rose-500 hover:bg-rose-50" onClick={() => promptDelete(r.id)}><Trash2 className="w-4 h-4" /></Button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr><td colSpan={6} className="text-center py-24 text-slate-500 italic font-black text-lg">No sample records found.</td></tr>
                                     )}
                                 </tbody>
                             </table>
@@ -601,6 +670,79 @@ const SampleManagementPage = () => {
                     </datalist>
                 </>
             )}
+
+            {/* Delete Sample Record Password Confirmation Dialog */}
+            <Dialog open={deleteModalOpen} onOpenChange={(open) => {
+                if (!open && !isDeleting) {
+                    setDeleteModalOpen(false);
+                    setDeletingId(null);
+                    setDeletePassword('');
+                }
+            }}>
+                <DialogContent className="max-w-md w-[95vw] sm:w-full rounded-2xl p-6">
+                    <DialogHeader className="space-y-2 pb-2 border-b border-slate-100">
+                        <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-1">
+                            <Trash2 className="w-6 h-6" />
+                        </div>
+                        <DialogTitle className="text-xl font-black tracking-tight text-slate-900">
+                            Confirm Delete Sample Record
+                        </DialogTitle>
+                        <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                            Deleting sample record <span className="font-bold text-slate-800">{deletingId}</span> is permanent and cannot be undone. Please enter the administrator password to authorize deletion.
+                        </p>
+                    </DialogHeader>
+
+                    <form onSubmit={handleConfirmDelete} className="space-y-4 pt-2">
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                                Admin Password
+                            </Label>
+                            <Input
+                                type="password"
+                                placeholder="Enter admin password"
+                                value={deletePassword}
+                                onChange={(e) => setDeletePassword(e.target.value)}
+                                autoFocus
+                                disabled={isDeleting}
+                                className="h-11 rounded-xl border-slate-200 focus:border-rose-500 focus:ring-rose-500 text-sm"
+                            />
+                        </div>
+
+                        <DialogFooter className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                disabled={isDeleting}
+                                onClick={() => {
+                                    setDeleteModalOpen(false);
+                                    setDeletingId(null);
+                                    setDeletePassword('');
+                                }}
+                                className="h-10 px-5 rounded-xl border-slate-200 text-slate-600 font-bold text-xs uppercase tracking-wider hover:bg-slate-50"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={isDeleting || !deletePassword}
+                                className="h-10 px-6 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase tracking-wider shadow-md shadow-rose-200 transition-all flex items-center gap-2"
+                            >
+                                {isDeleting ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        Deleting...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Trash2 className="w-4 h-4" />
+                                        Delete Sample Record
+                                    </>
+                                )}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

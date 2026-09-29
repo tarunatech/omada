@@ -3,18 +3,21 @@ import { useSearchParams } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Trash2, FileDown, Share2, Save, Eye, Pencil, ImagePlus, X, ArrowLeft, Search, PackageOpen, LayoutGrid, Users, FileText, User, X as CloseIcon } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import html2canvas from 'html2canvas';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import omadaLogo from '@/assets/omada-logo.png';
 import { api } from '@/lib/api';
 import { Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { globalSearch } from '@/lib/utils';
 import { CustomPagination } from '@/components/CustomPagination';
+import { useDebounce } from '@/hooks/useDebounce';
 
 interface QuotationItem {
     id: string;
@@ -22,6 +25,7 @@ interface QuotationItem {
     design: string;
     finish: string;
     size: string;
+    weight?: string;
     multiplier: number;
     qty: number;
     unitPrice: number;
@@ -110,6 +114,7 @@ const syncDesigns = async (categories: Category[]) => {
                         company: item.company || '-',
                         finish: item.finish || '-',
                         size: item.size || '-',
+                        weight: item.weight || '',
                         image: item.image || null,
                         status: 'Active'
                     });
@@ -136,6 +141,8 @@ const QuotationPage = () => {
     
     const [view, setView] = useState<'list' | 'form' | 'view'>('list');
     const [search, setSearch] = useState('');
+    const debouncedSearch = useDebounce(search, 400);
+    const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Final'>('All');
     const [loading, setLoading] = useState(true);
     const [records, setRecords] = useState<QuotationRecord[]>([]);
 
@@ -147,9 +154,11 @@ const QuotationPage = () => {
         try {
             setLoading(true);
             const userFilter = filterUserId ? `&createdBy=${filterUserId}` : '';
-            const data = await api.get(`/quotations?type=Quotation&page=${currentPage}&limit=${itemsPerPage}&search=${search}${userFilter}`);
+            const searchParam = debouncedSearch.trim() ? `&search=${encodeURIComponent(debouncedSearch.trim())}` : '';
+            const statusParam = statusFilter !== 'All' ? `&status=${statusFilter}` : '';
+            const data = await api.get(`/quotations?type=Quotation&page=${currentPage}&limit=${itemsPerPage}${searchParam}${statusParam}${userFilter}`);
             setRecords(data.data || []);
-            setTotalPages(data.pagination.totalPages || 1);
+            setTotalPages(data.pagination?.totalPages || 1);
         } catch (err) {
             toast.error('Failed to fetch quotations');
         } finally {
@@ -172,8 +181,14 @@ const QuotationPage = () => {
     };
 
     useEffect(() => {
+        if (currentPage !== 1) {
+            setCurrentPage(1);
+        }
+    }, [debouncedSearch, statusFilter]);
+
+    useEffect(() => {
         fetchQuotations();
-    }, [currentPage, search]);
+    }, [currentPage, debouncedSearch, statusFilter, filterUserId]);
 
     useEffect(() => {
         fetchMasterData();
@@ -204,6 +219,112 @@ const QuotationPage = () => {
     const [companyName, setCompanyName] = useState('');
     const orderRef = useRef<HTMLDivElement>(null);
 
+    // Terms & Conditions Checkbox Presets State
+    const DEFAULT_TERMS_PRESETS = ['100 % Advance Payment', 'Local Transportation'];
+    const [termsOptions, setTermsOptions] = useState<string[]>(() => {
+        try {
+            const saved = localStorage.getItem('omada_terms_options');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    return Array.from(new Set([...DEFAULT_TERMS_PRESETS, ...parsed]));
+                }
+            }
+        } catch (e) {
+            // ignore
+        }
+        return DEFAULT_TERMS_PRESETS;
+    });
+    const [selectedTerms, setSelectedTerms] = useState<string[]>([]);
+    const [customTermsNotes, setCustomTermsNotes] = useState<string>('');
+    const [newTermInput, setNewTermInput] = useState<string>('');
+    const [isAddingNewTerm, setIsAddingNewTerm] = useState<boolean>(false);
+
+    const updateCombinedTerms = (selected: string[], custom: string) => {
+        const parts = [...selected];
+        if (custom.trim()) {
+            parts.push(custom.trim());
+        }
+        setExtraTerms(parts.join('\n'));
+    };
+
+    const toggleTerm = (term: string) => {
+        setSelectedTerms(prev => {
+            const next = prev.includes(term) ? prev.filter(t => t !== term) : [...prev, term];
+            updateCombinedTerms(next, customTermsNotes);
+            return next;
+        });
+    };
+
+    const handleCustomNotesChange = (text: string) => {
+        setCustomTermsNotes(text);
+        updateCombinedTerms(selectedTerms, text);
+    };
+
+    const handleAddNewTerm = () => {
+        if (!newTermInput.trim()) return;
+        const trimmed = newTermInput.trim();
+        let currentOptions = [...termsOptions];
+        if (!currentOptions.some(t => t.toLowerCase() === trimmed.toLowerCase())) {
+            currentOptions = [...currentOptions, trimmed];
+            setTermsOptions(currentOptions);
+            localStorage.setItem('omada_terms_options', JSON.stringify(currentOptions));
+        }
+        if (!selectedTerms.includes(trimmed)) {
+            const nextSelected = [...selectedTerms, trimmed];
+            setSelectedTerms(nextSelected);
+            updateCombinedTerms(nextSelected, customTermsNotes);
+        }
+        setNewTermInput('');
+        setIsAddingNewTerm(false);
+        toast.success(`Added "${trimmed}" to terms options`);
+    };
+
+    const handleRemoveTermOption = (termToRemove: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        const updated = termsOptions.filter(t => t !== termToRemove);
+        setTermsOptions(updated);
+        localStorage.setItem('omada_terms_options', JSON.stringify(updated));
+        const nextSelected = selectedTerms.filter(t => t !== termToRemove);
+        setSelectedTerms(nextSelected);
+        updateCombinedTerms(nextSelected, customTermsNotes);
+        toast.success(`Removed "${termToRemove}"`);
+    };
+
+    const syncTermsFromRecord = (termsStr: string) => {
+        setExtraTerms(termsStr || '');
+        if (!termsStr) {
+            setSelectedTerms([]);
+            setCustomTermsNotes('');
+            return;
+        }
+        const lines = termsStr.split('\n').map(l => l.trim()).filter(Boolean);
+        const selected: string[] = [];
+        const customLines: string[] = [];
+
+        let currentOptions = [...termsOptions];
+        let optionsModified = false;
+
+        lines.forEach(line => {
+            const matched = currentOptions.find(o => o.toLowerCase() === line.toLowerCase());
+            if (matched) {
+                if (!selected.includes(matched)) selected.push(matched);
+            } else {
+                selected.push(line);
+                currentOptions.push(line);
+                optionsModified = true;
+            }
+        });
+
+        if (optionsModified) {
+            setTermsOptions(currentOptions);
+            localStorage.setItem('omada_terms_options', JSON.stringify(currentOptions));
+        }
+
+        setSelectedTerms(selected);
+        setCustomTermsNotes(customLines.join('\n'));
+    };
+
     const resetForm = () => {
         setCustomerName('');
         setMobile('');
@@ -215,6 +336,8 @@ const QuotationPage = () => {
         setIncludeGst(false);
         setEditingId(null);
         setExtraTerms('');
+        setSelectedTerms([]);
+        setCustomTermsNotes('');
         setCompanyName('');
     };
 
@@ -226,18 +349,19 @@ const QuotationPage = () => {
     const addItem = (catId: string) => {
         setCategories(categories.map(c =>
             c.id === catId
-                ? { ...c, items: [...c.items, { id: `${catId}-${Date.now()}`, company: '', design: '', finish: '', size: '', multiplier: 16, qty: 0, unitPrice: 0, total: 0, image: null, boxes: 0 }] }
+                ? { ...c, items: [...c.items, { id: `${catId}-${Date.now()}`, company: '', design: '', finish: '', size: '', weight: '', multiplier: 16, qty: 0, unitPrice: 0, total: 0, image: null, boxes: 0 }] }
                 : c
         ));
     };
 
     const updateItem = (catId: string, itemId: string, field: keyof QuotationItem, value: string | number | null) => {
+        const formattedValue = (typeof value === 'string' && field !== 'image' && field !== 'id') ? value.toUpperCase() : value;
         setCategories(prev => prev.map(c =>
             c.id === catId
                 ? {
                     ...c, items: c.items.map(i => {
                         if (i.id === itemId) {
-                            const updated = { ...i, [field]: value };
+                            const updated = { ...i, [field]: formattedValue };
                             // Auto-calculate total: multiplier * qty * price
                             // Special case: if multiplier is 1 (None), total is qty * unitPrice
                             const m = Number(updated.multiplier) || 0;
@@ -275,27 +399,38 @@ const QuotationPage = () => {
     };
 
     const grandTotalValue = categories.reduce((sum, c) => sum + c.items.reduce((s, i) => s + (Number(i.total) || 0), 0), 0);
-    const finalTotalValue = includeGst ? grandTotalValue * 1.18 : grandTotalValue;
+    const rawTotalValue = includeGst ? grandTotalValue * 1.18 : grandTotalValue;
+    const finalTotalValue = Math.round(rawTotalValue);
+    const roundOffValue = Number((finalTotalValue - rawTotalValue).toFixed(2));
 
     const handleSave = async () => {
         const newRecord: QuotationRecord = {
             id: editingId || `Q-${1000 + records.length + 1}`,
-            customerName,
-            mobile,
-            salesRef,
+            customerName: customerName.trim().toUpperCase(),
+            mobile: mobile.trim(),
+            salesRef: salesRef.trim().toUpperCase(),
             date: new Date().toISOString().split('T')[0],
             grandTotal: finalTotalValue,
             categories: categories.map(c => ({
                 ...c,
-                items: c.items.map(i => ({ ...i, total: Number(i.total) }))
+                name: c.name.trim().toUpperCase(),
+                items: c.items.map(i => ({
+                    ...i,
+                    company: (i.company || '').trim().toUpperCase(),
+                    design: (i.design || '').trim().toUpperCase(),
+                    finish: (i.finish || '').trim().toUpperCase(),
+                    size: (i.size || '').trim().toUpperCase(),
+                    weight: (i.weight || '').trim().toUpperCase(),
+                    total: Number(i.total)
+                }))
             })),
-            siteAddress,
-            referenceInfo,
+            siteAddress: siteAddress.trim().toUpperCase(),
+            referenceInfo: referenceInfo.trim().toUpperCase(),
             customerLogo,
             status: editingId ? (records.find(r => r.id === editingId)?.status || 'Pending') : 'Pending',
             includeGst,
-            extraTerms,
-            companyName
+            extraTerms: extraTerms.trim().toUpperCase(),
+            companyName: companyName.trim().toUpperCase()
         };
 
         try {
@@ -323,6 +458,9 @@ const QuotationPage = () => {
             setRecords(records.map(r => r.id === id ? { ...r, status: newStatus } : r));
             fetchMasterData(); // Refresh best designs usage counts
             toast.success(`Quotation status updated to ${newStatus}`);
+            if (statusFilter !== 'All') {
+                fetchQuotations();
+            }
         } catch (err) {
             toast.error('Failed to update status');
         }
@@ -338,8 +476,8 @@ const QuotationPage = () => {
         setCustomerLogo(record.customerLogo);
         setCategories(record.categories);
         setIncludeGst(record.includeGst || false);
-        setExtraTerms(record.extraTerms || '');
         setCompanyName(record.companyName || '');
+        syncTermsFromRecord(record.extraTerms || '');
         setView('view');
     };
 
@@ -353,20 +491,48 @@ const QuotationPage = () => {
         setCustomerLogo(record.customerLogo);
         setCategories(record.categories);
         setIncludeGst(record.includeGst || false);
-        setExtraTerms(record.extraTerms || '');
         setCompanyName(record.companyName || '');
+        syncTermsFromRecord(record.extraTerms || '');
         setView('form');
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this quotation? This action cannot be undone.')) return;
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [deletePassword, setDeletePassword] = useState('');
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const promptDelete = (id: string) => {
+        setDeletingId(id);
+        setDeletePassword('');
+        setDeleteModalOpen(true);
+    };
+
+    const handleConfirmDelete = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!deletingId) return;
+        if (!deletePassword) {
+            toast.error('Please enter the administrator password');
+            return;
+        }
+        if (deletePassword !== 'admin123') {
+            toast.error('Incorrect password. Cannot delete quotation.');
+            return;
+        }
         try {
-            await api.delete(`/quotations/${id}`);
-            setRecords(records.filter(r => r.id !== id));
+            setIsDeleting(true);
+            await api.delete(`/quotations/${encodeURIComponent(deletingId)}`, {
+                headers: { 'x-admin-password': deletePassword }
+            });
+            setRecords(prev => prev.filter(r => r.id !== deletingId));
             toast.success('Quotation deleted successfully');
+            setDeleteModalOpen(false);
+            setDeletingId(null);
+            setDeletePassword('');
             fetchMasterData(); // Refresh best designs usage counts if it was Final
-        } catch (err) {
-            toast.error('Failed to delete quotation');
+        } catch (err: any) {
+            toast.error(err?.message || 'Failed to delete quotation');
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -436,7 +602,7 @@ const QuotationPage = () => {
         return canvas;
     };
 
-    const handleGeneratePDF = async (record?: QuotationRecord) => {
+    const buildQuotationPDF = async (record?: QuotationRecord) => {
         const data: any = record || {
             id: editingId || `Q-${1000 + records.length + 1}`,
             customerName,
@@ -461,7 +627,9 @@ const QuotationPage = () => {
         const subtotal = data.categories.reduce((acc, cat) => acc + cat.items.reduce((s, i) => s + (Number(i.total) || 0), 0), 0);
         const cgst = data.includeGst ? subtotal * 0.09 : 0;
         const sgst = data.includeGst ? subtotal * 0.09 : 0;
-        const totalCost = subtotal + cgst + sgst;
+        const rawTotal = data.includeGst ? (subtotal + cgst + sgst) : subtotal;
+        const totalCost = Math.round(rawTotal);
+        const roundOff = Number((totalCost - rawTotal).toFixed(2));
 
         const marbleTextureUrl = window.location.origin + '/marble-texture.png';
 
@@ -616,7 +784,7 @@ const QuotationPage = () => {
                                 <!-- PRODUCT INFO -->
                                 <div style="flex: 1; padding: 0 25px; display: flex; flex-direction: column; justify-content: center;">
                                     <div style="font-size: 16px; font-weight: 1000; color: #111; text-transform: uppercase; margin-bottom: 5px; letter-spacing: -0.2px;">${item.design}</div>
-                                    <div style="font-size: 10px; font-weight: 700; color: #777; text-transform: uppercase; letter-spacing: 0.8px;">${item.finish} • ${item.size}</div>
+                                    <div style="font-size: 10px; font-weight: 700; color: #777; text-transform: uppercase; letter-spacing: 0.8px;">${item.finish} • ${item.size}${item.weight ? ` • ${item.weight}` : ''}</div>
                                 </div>
 
                                 <!-- PRICING BREAKDOWN -->
@@ -654,27 +822,48 @@ const QuotationPage = () => {
             <div style="margin-top: 35px; margin-bottom: 40px; display: flex; justify-content: flex-end; align-items: center; gap: 20px;">
               ${data.includeGst ? `
                 <div style="display: flex; flex-direction: column; gap: 10px; justify-content: center;">
-                    <div style="width: 250px; height: 110px; background: #FAF3F0; border: 1px solid #000000; border-radius: 12px; padding: 0 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; align-items: center;">
+                    <div style="width: 250px; ${roundOff !== 0 ? 'height: 125px;' : 'height: 110px;'} background: #FAF3F0; border: 1px solid #000000; border-radius: 12px; padding: 0 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; align-items: center;">
                          <table style="width: 100%; border-collapse: collapse;">
                              <tr>
-                                 <td style="font-size: 11px; color: #475569; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; padding: 4px 0;">Basis Total</td>
-                                 <td style="font-size: 11px; color: #000000; font-weight: 900; text-align: right; padding: 4px 0;">₹${subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                 <td style="font-size: 11px; color: #475569; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; padding: 3px 0;">Basis Total</td>
+                                 <td style="font-size: 11px; color: #000000; font-weight: 900; text-align: right; padding: 3px 0;">₹${subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                              </tr>
                              <tr>
-                                 <td style="font-size: 11px; color: #475569; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; padding: 4px 0;">CGST (9%)</td>
-                                 <td style="font-size: 11px; color: #000000; font-weight: 900; text-align: right; padding: 4px 0;">₹${cgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                 <td style="font-size: 11px; color: #475569; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; padding: 3px 0;">CGST (9%)</td>
+                                 <td style="font-size: 11px; color: #000000; font-weight: 900; text-align: right; padding: 3px 0;">₹${cgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                              </tr>
                              <tr>
-                                 <td style="font-size: 11px; color: #475569; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; padding: 4px 0;">SGST (9%)</td>
-                                 <td style="font-size: 11px; color: #000000; font-weight: 900; text-align: right; padding: 4px 0;">₹${sgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                 <td style="font-size: 11px; color: #475569; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; padding: 3px 0;">SGST (9%)</td>
+                                 <td style="font-size: 11px; color: #000000; font-weight: 900; text-align: right; padding: 3px 0;">₹${sgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                              </tr>
+                             ${roundOff !== 0 ? `
+                             <tr>
+                                 <td style="font-size: 11px; color: #475569; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; padding: 3px 0;">Round Off</td>
+                                 <td style="font-size: 11px; color: #000000; font-weight: 900; text-align: right; padding: 3px 0;">${roundOff > 0 ? '+' : ''}₹${roundOff.toFixed(2)}</td>
+                             </tr>
+                             ` : ''}
                          </table>
                     </div>
                     <div style="padding: 10px 15px; background: #FFF5F5; border: 1px solid #FED7D7; border-radius: 8px; color: #C53030; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; text-align: center;">
                       ⚡ GST 18% Extra as per statutory norms
                     </div>
                 </div>
-              ` : ''}
+              ` : (roundOff !== 0 ? `
+                <div style="display: flex; flex-direction: column; gap: 10px; justify-content: center;">
+                    <div style="width: 250px; height: 75px; background: #FAF3F0; border: 1px solid #000000; border-radius: 12px; padding: 0 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; align-items: center;">
+                         <table style="width: 100%; border-collapse: collapse;">
+                             <tr>
+                                 <td style="font-size: 11px; color: #475569; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; padding: 3px 0;">Items Total</td>
+                                 <td style="font-size: 11px; color: #000000; font-weight: 900; text-align: right; padding: 3px 0;">₹${subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                             </tr>
+                             <tr>
+                                 <td style="font-size: 11px; color: #475569; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; padding: 3px 0;">Round Off</td>
+                                 <td style="font-size: 11px; color: #000000; font-weight: 900; text-align: right; padding: 3px 0;">${roundOff > 0 ? '+' : ''}₹${roundOff.toFixed(2)}</td>
+                             </tr>
+                         </table>
+                    </div>
+                </div>
+              ` : '')}
               
               <div style="width: 230px; height: 110px; background: #111111; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); border: 1.5px solid #855546; position: relative; display: flex; align-items: center; justify-content: center;">
                    <!-- Floating Header -->
@@ -718,7 +907,20 @@ const QuotationPage = () => {
 
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
 
-            pdf.save(`Quotation_${data.customerName.replace(/\s+/g, '')}_${quotationNo}.pdf`);
+            const customerCleanName = (data.customerName || 'Customer').replace(/\s+/g, '');
+            const filename = `Quotation_${customerCleanName}_${quotationNo}.pdf`;
+
+            return { pdf, filename, data, quotationNo, totalCost };
+        } catch (error) {
+            console.error('PDF generation error:', error);
+            throw error;
+        }
+    };
+
+    const handleGeneratePDF = async (record?: QuotationRecord) => {
+        try {
+            const { pdf, filename } = await buildQuotationPDF(record);
+            pdf.save(filename);
             toast.success('Luxury Quotation Generated Successfully!');
         } catch (error) {
             console.error('PDF generation error:', error);
@@ -727,10 +929,35 @@ const QuotationPage = () => {
     };
 
     const handleWhatsAppShare = (record: QuotationRecord) => {
-        const message = `Hello ${record.customerName}, here is your quotation ${record.id} from OMADA HOME STUDIO. Total amount: ₹${(Number(record.grandTotal) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`;
+        const customerName = record.customerName || 'Valued Customer';
+        const quotationNo = record.id;
+        const totalAmount = (Number(record.grandTotal) || 0).toLocaleString('en-IN', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+        let cleanMobile = (record.mobile || '').replace(/\D/g, '');
+        
+        // Ensure country code (default to 91 for India if 10 digits)
+        if (cleanMobile.length === 10) {
+            cleanMobile = '91' + cleanMobile;
+        } else if (cleanMobile.startsWith('0') && cleanMobile.length === 11) {
+            cleanMobile = '91' + cleanMobile.slice(1);
+        }
+
+        if (!cleanMobile) {
+            toast.error('Customer phone number is missing or invalid.');
+            return;
+        }
+
+        const quotationUrl = `${window.location.origin}/view-quotation/${record.id}`;
+        const message = `Hello *${customerName}*,\n\nPlease find your official quotation *${quotationNo}* from *OMADA HOME STUDIO*.\n\n📄 *View & Download PDF Quotation:* \n${quotationUrl}\n\n*Total Amount:* ₹${totalAmount}\n\nThank you for choosing OMADA HOME STUDIO.`;
+
         const encodedMessage = encodeURIComponent(message);
-        const whatsappUrl = `https://wa.me/${record.mobile.replace(/\D/g, '')}?text=${encodedMessage}`;
+        const whatsappUrl = `https://wa.me/${cleanMobile}?text=${encodedMessage}`;
         window.open(whatsappUrl, '_blank');
+
+        toast.success(`Opening WhatsApp chat with +${cleanMobile}...`);
     };
 
     const persistOrderToSystem = async (company: string, items: any[], qRecord: QuotationRecord, poNumber: string) => {
@@ -1057,18 +1284,56 @@ const QuotationPage = () => {
                         </Button>
                     </div>
 
-                    <div className="flex items-center gap-4 mb-8">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mb-8">
                         <div className="relative flex-1 w-full max-w-md">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <Input
                                 placeholder="Search by identity, company, or reference..."
-                                className="pl-11 bg-white border-slate-200 h-12 rounded-2xl shadow-xl shadow-slate-200/40 font-bold"
+                                className="pl-11 pr-10 bg-white border-slate-200 h-12 rounded-2xl shadow-xl shadow-slate-200/40 font-bold"
                                 value={search}
-                                onChange={e => {
-                                    setSearch(e.target.value);
-                                    setCurrentPage(1);
-                                }}
+                                onChange={e => setSearch(e.target.value)}
                             />
+                            {search && (
+                                <button
+                                    type="button"
+                                    onClick={() => setSearch('')}
+                                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-lg transition-colors"
+                                    title="Clear search"
+                                >
+                                    <CloseIcon className="w-4 h-4" />
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="w-full sm:w-56">
+                            <Select value={statusFilter} onValueChange={(val: 'All' | 'Pending' | 'Final') => setStatusFilter(val)}>
+                                <SelectTrigger className="h-12 bg-white border-slate-200 rounded-2xl shadow-xl shadow-slate-200/40 font-bold px-4 text-slate-700 focus:ring-4 focus:ring-primary/5">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">Status:</span>
+                                        <SelectValue placeholder="All Status" />
+                                    </div>
+                                </SelectTrigger>
+                                <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-1 bg-white">
+                                    <SelectItem value="All" className="font-bold py-2.5 rounded-xl cursor-pointer">
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-2 h-2 rounded-full bg-slate-400" />
+                                            <span>All Status</span>
+                                        </div>
+                                    </SelectItem>
+                                    <SelectItem value="Pending" className="font-bold py-2.5 rounded-xl cursor-pointer">
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-2 h-2 rounded-full bg-amber-500" />
+                                            <span className="text-amber-700">Pending</span>
+                                        </div>
+                                    </SelectItem>
+                                    <SelectItem value="Final" className="font-bold py-2.5 rounded-xl cursor-pointer">
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                            <span className="text-emerald-700">Final</span>
+                                        </div>
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
 
@@ -1088,104 +1353,114 @@ const QuotationPage = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {paginatedRecords.map((r, index) => (
-                                        <tr key={r.id} className="hover:bg-slate-50/50 transition-all duration-300 group align-middle">
-                                            <td className="py-4 px-6 text-center text-slate-400 font-bold tabular-nums">
-                                                {(currentPage - 1) * itemsPerPage + index + 1}
-                                            </td>
-                                            <td className="py-4 px-6 text-left font-semibold text-slate-900 truncate">{r.customerName}</td>
-                                            <td className="py-4 px-6 text-left text-slate-700 font-medium whitespace-nowrap hidden md:table-cell">{r.mobile || '-'}</td>
-                                            <td className="py-4 px-6 text-left text-slate-600 font-medium hidden lg:table-cell">{r.date && !isNaN(new Date(r.date).getTime()) ? format(new Date(r.date), 'dd/MM/yyyy') : (r.date || '-')}</td>
-                                            <td className="py-4 px-6 text-center">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className={`h-7 px-3 text-[10px] font-bold uppercase tracking-wider rounded-full border transition-all ${r.status === 'Final'
-                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                        : 'bg-amber-50 text-amber-700 border-amber-200'
-                                                        }`}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleStatusChange(r.id, r.status === 'Final' ? 'Pending' : 'Final');
-                                                    }}
-                                                >
-                                                    {r.status}
-                                                </Button>
-                                            </td>
-                                            <td className="py-4 px-6 text-right font-bold text-slate-950 tabular-nums">
-                                                ₹{(Number(r.grandTotal) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                            </td>
-                                            <td className="py-4 px-6 text-left text-slate-700 font-medium truncate hidden xl:table-cell">{r.salesRef || '-'}</td>
-                                            <td className="py-4 px-6">
-                                                <div className="flex items-center justify-center gap-4 transition-all">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-9 w-9 text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl"
-                                                        onClick={() => handleView(r)}
-                                                        title="Quick View"
-                                                    >
-                                                        <Eye className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-9 w-9 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl"
-                                                        onClick={() => handleGeneratePDF(r)}
-                                                        title="Export PDF"
-                                                    >
-                                                        <FileDown className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-9 w-9 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl"
-                                                        onClick={() => handleWhatsAppShare(r)}
-                                                        title="Broadcast"
-                                                    >
-                                                        <Share2 className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-9 w-9 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 rounded-xl"
-                                                        onClick={() => handleEdit(r)}
-                                                        title="Modify"
-                                                    >
-                                                        <Pencil className="w-4 h-4" />
-                                                    </Button>
-                                                    {r.status === 'Final' && (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-9 w-9 text-amber-500 hover:text-amber-700 hover:bg-amber-50 rounded-xl"
-                                                            onClick={() => {
-                                                                setSelectedRecordForExport(r);
-                                                                setSelectedRecordIndex(index + 1);
-                                                                setOrderExportOpen(true);
-                                                            }}
-                                                            title="Asset Export"
-                                                        >
-                                                            <PackageOpen className="w-4 h-4" />
-                                                        </Button>
-                                                    )}
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-9 w-9 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleDelete(encodeURIComponent(r.id));
-                                                        }}
-                                                        title="Remove"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
+                                    {loading ? (
+                                        <tr>
+                                            <td colSpan={8} className="text-center py-12 text-slate-400">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                                                    <span className="font-semibold text-sm">Searching quotations...</span>
                                                 </div>
                                             </td>
                                         </tr>
-                                    ))}
-                                    {records.length === 0 && (
+                                    ) : paginatedRecords.length > 0 ? (
+                                        paginatedRecords.map((r, index) => (
+                                            <tr key={r.id} className="hover:bg-slate-50/50 transition-all duration-300 group align-middle">
+                                                <td className="py-4 px-6 text-center text-slate-400 font-bold tabular-nums">
+                                                    {(currentPage - 1) * itemsPerPage + index + 1}
+                                                </td>
+                                                <td className="py-4 px-6 text-left font-semibold text-slate-900 truncate">{r.customerName}</td>
+                                                <td className="py-4 px-6 text-left text-slate-700 font-medium whitespace-nowrap hidden md:table-cell">{r.mobile || '-'}</td>
+                                                <td className="py-4 px-6 text-left text-slate-600 font-medium hidden lg:table-cell">{r.date && !isNaN(new Date(r.date).getTime()) ? format(new Date(r.date), 'dd/MM/yyyy') : (r.date || '-')}</td>
+                                                <td className="py-4 px-6 text-center">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className={`h-7 px-3 text-[10px] font-bold uppercase tracking-wider rounded-full border transition-all ${r.status === 'Final'
+                                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                            : 'bg-amber-50 text-amber-700 border-amber-200'
+                                                            }`}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleStatusChange(r.id, r.status === 'Final' ? 'Pending' : 'Final');
+                                                        }}
+                                                    >
+                                                        {r.status}
+                                                    </Button>
+                                                </td>
+                                                <td className="py-4 px-6 text-right font-bold text-slate-950 tabular-nums">
+                                                    ₹{(Number(r.grandTotal) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </td>
+                                                <td className="py-4 px-6 text-left text-slate-700 font-medium truncate hidden xl:table-cell">{r.salesRef || '-'}</td>
+                                                <td className="py-4 px-6">
+                                                    <div className="flex items-center justify-center gap-4 transition-all">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-9 w-9 text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl"
+                                                            onClick={() => handleView(r)}
+                                                            title="Quick View"
+                                                        >
+                                                            <Eye className="w-4 h-4" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-9 w-9 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl"
+                                                            onClick={() => handleGeneratePDF(r)}
+                                                            title="Export PDF"
+                                                        >
+                                                            <FileDown className="w-4 h-4" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-9 w-9 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl"
+                                                            onClick={() => handleWhatsAppShare(r)}
+                                                            title="Broadcast"
+                                                        >
+                                                            <Share2 className="w-4 h-4" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-9 w-9 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 rounded-xl"
+                                                            onClick={() => handleEdit(r)}
+                                                            title="Modify"
+                                                        >
+                                                            <Pencil className="w-4 h-4" />
+                                                        </Button>
+                                                        {r.status === 'Final' && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-9 w-9 text-amber-500 hover:text-amber-700 hover:bg-amber-50 rounded-xl"
+                                                                onClick={() => {
+                                                                    setSelectedRecordForExport(r);
+                                                                    setSelectedRecordIndex(index + 1);
+                                                                    setOrderExportOpen(true);
+                                                                }}
+                                                                title="Asset Export"
+                                                            >
+                                                                <PackageOpen className="w-4 h-4" />
+                                                            </Button>
+                                                        )}
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-9 w-9 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                promptDelete(r.id);
+                                                            }}
+                                                            title="Remove"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
                                         <tr>
                                             <td colSpan={8} className="text-center py-12 text-[#94a3b8] italic">
                                                 No quotation records found.
@@ -1285,17 +1560,131 @@ const QuotationPage = () => {
                                 </div>
 
                                 <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-xl shadow-slate-200/40 relative overflow-hidden">
-                                    <h3 className="text-[14px] font-black uppercase tracking-[0.15em] text-slate-700 mb-8 flex items-center gap-2">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                                        Terms & Conditions (Optional)
-                                    </h3>
-                                    <textarea
-                                        value={extraTerms}
-                                        onChange={e => setExtraTerms(e.target.value)}
-                                        disabled={view === 'view'}
-                                        className="w-full min-h-[100px] px-5 py-4 rounded-2xl bg-slate-50/50 border-slate-100 focus:bg-white focus:ring-4 focus:ring-primary/5 transition-all font-bold text-sm resize-none"
-                                        placeholder="Add special instructions or custom terms for this quotation..."
-                                    />
+                                    <div className="flex items-center justify-between mb-6">
+                                        <h3 className="text-[14px] font-black uppercase tracking-[0.15em] text-slate-700 flex items-center gap-2">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                            Terms & Conditions (Optional)
+                                        </h3>
+                                        {view !== 'view' && !isAddingNewTerm && (
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => setIsAddingNewTerm(true)}
+                                                className="h-8 px-3 rounded-xl text-[11px] font-black uppercase tracking-wider text-primary hover:bg-primary/10 transition-all flex items-center gap-1.5"
+                                            >
+                                                <Plus className="w-3.5 h-3.5" /> Add New Term
+                                            </Button>
+                                        )}
+                                    </div>
+
+                                    {/* Terms Checkbox Selection Grid */}
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            {termsOptions.map((term) => {
+                                                const isChecked = selectedTerms.includes(term);
+                                                return (
+                                                    <div
+                                                        key={term}
+                                                        onClick={() => {
+                                                            if (view !== 'view') toggleTerm(term);
+                                                        }}
+                                                        className={`group relative flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all cursor-pointer select-none ${
+                                                            isChecked
+                                                                ? 'bg-primary/5 border-primary/40 shadow-sm shadow-primary/10'
+                                                                : 'bg-slate-50/70 border-slate-100 hover:border-slate-200 hover:bg-slate-50'
+                                                        } ${view === 'view' ? 'cursor-default' : ''}`}
+                                                    >
+                                                        <div className="flex items-center gap-3 pr-2 min-w-0">
+                                                            <Checkbox
+                                                                checked={isChecked}
+                                                                onCheckedChange={() => {
+                                                                    if (view !== 'view') toggleTerm(term);
+                                                                }}
+                                                                disabled={view === 'view'}
+                                                                className="rounded-lg data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                                            />
+                                                            <span className={`text-xs font-bold truncate ${
+                                                                isChecked ? 'text-slate-900 font-black' : 'text-slate-600'
+                                                            }`}>
+                                                                {term}
+                                                            </span>
+                                                        </div>
+
+                                                        {/* Allow deleting custom term option if not one of the default two and not view mode */}
+                                                        {view !== 'view' && !DEFAULT_TERMS_PRESETS.includes(term) && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => handleRemoveTermOption(term, e)}
+                                                                title="Remove term option"
+                                                                className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-500 hover:bg-rose-50 p-1 rounded-lg transition-all"
+                                                            >
+                                                                <X className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {/* Inline Create New Term Field */}
+                                        {view !== 'view' && isAddingNewTerm && (
+                                            <div className="flex items-center gap-2 p-3 bg-primary/5 border border-primary/20 rounded-2xl animate-in fade-in slide-in-from-top-1 duration-200">
+                                                <Input
+                                                    type="text"
+                                                    value={newTermInput}
+                                                    onChange={(e) => setNewTermInput(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            e.preventDefault();
+                                                            handleAddNewTerm();
+                                                        } else if (e.key === 'Escape') {
+                                                            setIsAddingNewTerm(false);
+                                                            setNewTermInput('');
+                                                        }
+                                                    }}
+                                                    placeholder="Enter new term (e.g. 50% Advance & 50% on Dispatch)..."
+                                                    className="h-10 bg-white rounded-xl text-xs font-bold border-slate-200 focus:border-primary"
+                                                    autoFocus
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    onClick={handleAddNewTerm}
+                                                    disabled={!newTermInput.trim()}
+                                                    className="h-10 px-4 rounded-xl bg-slate-900 text-white font-black text-xs uppercase tracking-wider shrink-0"
+                                                >
+                                                    Add
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        setIsAddingNewTerm(false);
+                                                        setNewTermInput('');
+                                                    }}
+                                                    className="h-10 px-3 rounded-xl text-slate-400 hover:text-slate-600 shrink-0"
+                                                >
+                                                    Cancel
+                                                </Button>
+                                            </div>
+                                        )}
+
+                                        {/* Custom Additional Notes Textarea */}
+                                        <div className="space-y-1.5 pt-2">
+                                            <Label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                                                Additional Custom Instructions (Optional)
+                                            </Label>
+                                            <textarea
+                                                value={customTermsNotes}
+                                                onChange={e => handleCustomNotesChange(e.target.value)}
+                                                disabled={view === 'view'}
+                                                className="w-full min-h-[70px] px-5 py-3 rounded-2xl bg-slate-50/50 border border-slate-100 focus:bg-white focus:ring-4 focus:ring-primary/5 transition-all font-bold text-xs resize-none placeholder:text-slate-300"
+                                                placeholder="Type any one-off instructions or custom notes here..."
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-xl shadow-slate-200/40 relative overflow-hidden">
@@ -1374,6 +1763,7 @@ const QuotationPage = () => {
                                                             <th className="w-[150px] pb-3 text-left">Design</th>
                                                             <th className="w-[110px] pb-3 text-left">Finish</th>
                                                             <th className="w-[120px] pb-3 text-left">Size</th>
+                                                            <th className="w-[100px] pb-3 text-left">Weight</th>
                                                             <th className="w-[90px] pb-3 text-left">Sqft/Bx</th>
                                                             <th className="text-center w-[80px] pb-3">Qty</th>
                                                             <th className="text-right w-[100px] pb-3">Price</th>
@@ -1464,6 +1854,7 @@ const QuotationPage = () => {
                                                                                                 design: matched.design, // Correct casing
                                                                                                 finish: (matched as any).finish || i.finish,
                                                                                                 size: newSize,
+                                                                                                weight: (matched as any).weight || i.weight || '',
                                                                                                 image: matched.image || i.image,
                                                                                             };
                                                                                             if (!opts.includes(updated.multiplier)) {
@@ -1488,7 +1879,9 @@ const QuotationPage = () => {
                                                                         {(masterProducts || [])
                                                                             .filter(p => !item.company || p.company.toLowerCase() === item.company.toLowerCase())
                                                                             .map((p, idx) => (
-                                                                                <option key={idx} value={p.design} />
+                                                                                <option key={idx} value={p.design}>
+                                                                                    {p.company ? `${p.company} • ` : ''}{p.design}{p.size ? ` (${p.size})` : ''}{p.weight ? ` [${p.weight}]` : ''}
+                                                                                </option>
                                                                             ))}
                                                                     </datalist>
                                                                 </td>
@@ -1501,6 +1894,7 @@ const QuotationPage = () => {
                                                                         updateItem(cat.id, item.id, 'multiplier', options[0]);
                                                                     }
                                                                 }} disabled={view === 'view'} /></td>
+                                                                <td className="py-2"><Input className="h-10 text-sm font-black text-slate-900 border-slate-200 shadow-sm" placeholder="Weight" value={item.weight || ''} onChange={e => updateItem(cat.id, item.id, 'weight', e.target.value)} disabled={view === 'view'} /></td>
                                                                 <td className="py-2">
                                                                     {isManualMap[item.id] ? (
                                                                         <Input
@@ -1607,22 +2001,45 @@ const QuotationPage = () => {
                                         </div>
                                     </div>
 
-                                    {includeGst && (
-                                        <div className="flex flex-col gap-2 mb-4 text-[12px] font-bold text-slate-500 uppercase tracking-widest">
-                                            <div className="flex justify-between">
-                                                <span>Subtotal</span>
-                                                <span className="text-slate-700">₹{grandTotalValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span>CGST (9%)</span>
-                                                <span className="text-slate-700">₹{(grandTotalValue * 0.09).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span>SGST (9%)</span>
-                                                <span className="text-slate-700">₹{(grandTotalValue * 0.09).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                            </div>
-                                        </div>
-                                    )}
+                                    <div className="flex flex-col gap-2 mb-4 text-[12px] font-bold text-slate-500 uppercase tracking-widest">
+                                        {includeGst ? (
+                                            <>
+                                                <div className="flex justify-between">
+                                                    <span>Subtotal</span>
+                                                    <span className="text-slate-700">₹{grandTotalValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>CGST (9%)</span>
+                                                    <span className="text-slate-700">₹{(grandTotalValue * 0.09).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>SGST (9%)</span>
+                                                    <span className="text-slate-700">₹{(grandTotalValue * 0.09).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                </div>
+                                                {roundOffValue !== 0 && (
+                                                    <div className="flex justify-between text-slate-500">
+                                                        <span>Round Off</span>
+                                                        <span className="text-slate-700">{roundOffValue > 0 ? '+' : ''}₹{roundOffValue.toFixed(2)}</span>
+                                                    </div>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <>
+                                                {roundOffValue !== 0 && (
+                                                    <>
+                                                        <div className="flex justify-between">
+                                                            <span>Raw Subtotal</span>
+                                                            <span className="text-slate-700">₹{grandTotalValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                        </div>
+                                                        <div className="flex justify-between text-slate-500">
+                                                            <span>Round Off</span>
+                                                            <span className="text-slate-700">{roundOffValue > 0 ? '+' : ''}₹{roundOffValue.toFixed(2)}</span>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
 
                                     <div className="flex justify-between items-end pt-4 border-t border-slate-200">
                                         <div>
@@ -1658,16 +2075,19 @@ const QuotationPage = () => {
                                             variant="outline"
                                             className="h-11 text-emerald-700 font-bold border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50"
                                             onClick={() => handleWhatsAppShare({
-                                                id: editingId || 'NEW',
+                                                id: editingId || `Q-${1000 + records.length + 1}`,
                                                 customerName,
+                                                companyName,
                                                 mobile,
-                                                grandTotal: grandTotalValue,
+                                                grandTotal: finalTotalValue,
                                                 salesRef,
                                                 date: new Date().toISOString(),
                                                 categories,
                                                 siteAddress,
                                                 referenceInfo,
                                                 customerLogo,
+                                                includeGst,
+                                                extraTerms,
                                                 status: 'Pending'
                                             })}
                                         >
@@ -1681,7 +2101,7 @@ const QuotationPage = () => {
                                                     id: editingId || 'NEW',
                                                     customerName,
                                                     mobile,
-                                                    grandTotal: grandTotalValue,
+                                                    grandTotal: finalTotalValue,
                                                     salesRef,
                                                     date: new Date().toISOString(),
                                                     categories,
@@ -1745,7 +2165,7 @@ const QuotationPage = () => {
                                                                     )}
                                                                     <div>
                                                                         <p className="font-black text-slate-800 uppercase leading-none mb-1">{item.design || 'Unnamed Item'}</p>
-                                                                        <p className="text-[10px] text-slate-400 font-bold tracking-tight uppercase">{item.finish} • {item.size}</p>
+                                                                        <p className="text-[10px] text-slate-400 font-bold tracking-tight uppercase">{item.finish} • {item.size}{item.weight ? ` • ${item.weight}` : ''}</p>
                                                                     </div>
                                                                 </div>
                                                                 <div className="text-right flex flex-col items-end">
@@ -1772,7 +2192,7 @@ const QuotationPage = () => {
                                                 </label>
                                             </div>
 
-                                            {includeGst && (
+                                            {includeGst ? (
                                                 <div className="relative z-10 w-full flex flex-col gap-1 border border-black rounded-lg p-4 bg-[#FAF3F0] mb-1">
                                                      <div className="flex justify-between text-[11px] text-[#475569] font-black uppercase tracking-widest">
                                                          <span>Subtotal</span>
@@ -1786,7 +2206,26 @@ const QuotationPage = () => {
                                                          <span>SGST (9%)</span>
                                                          <span className="text-black">₹{(grandTotalValue * 0.09).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                                      </div>
-                                                 </div>
+                                                     {roundOffValue !== 0 && (
+                                                         <div className="flex justify-between text-[11px] text-[#475569] font-black uppercase tracking-widest">
+                                                             <span>Round Off</span>
+                                                             <span className="text-black">{roundOffValue > 0 ? '+' : ''}₹{roundOffValue.toFixed(2)}</span>
+                                                         </div>
+                                                     )}
+                                                </div>
+                                            ) : (
+                                                roundOffValue !== 0 && (
+                                                    <div className="relative z-10 w-full flex flex-col gap-1 border border-black rounded-lg p-3 bg-[#FAF3F0] mb-1">
+                                                         <div className="flex justify-between text-[11px] text-[#475569] font-black uppercase tracking-widest">
+                                                             <span>Items Total</span>
+                                                             <span className="text-black">₹{grandTotalValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                         </div>
+                                                         <div className="flex justify-between text-[11px] text-[#475569] font-black uppercase tracking-widest">
+                                                             <span>Round Off</span>
+                                                             <span className="text-black">{roundOffValue > 0 ? '+' : ''}₹{roundOffValue.toFixed(2)}</span>
+                                                         </div>
+                                                    </div>
+                                                )
                                             )}
 
                                             <div className="flex justify-between items-end relative z-10 w-full mt-1 border-t border-white/20 pt-3">
@@ -2018,6 +2457,79 @@ const QuotationPage = () => {
                             Close Record
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Quotation Password Confirmation Dialog */}
+            <Dialog open={deleteModalOpen} onOpenChange={(open) => {
+                if (!open && !isDeleting) {
+                    setDeleteModalOpen(false);
+                    setDeletingId(null);
+                    setDeletePassword('');
+                }
+            }}>
+                <DialogContent className="max-w-md w-[95vw] sm:w-full rounded-2xl p-6">
+                    <DialogHeader className="space-y-2 pb-2 border-b border-slate-100">
+                        <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-1">
+                            <Trash2 className="w-6 h-6" />
+                        </div>
+                        <DialogTitle className="text-xl font-black tracking-tight text-slate-900">
+                            Confirm Delete Quotation
+                        </DialogTitle>
+                        <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                            Deleting quotation <span className="font-bold text-slate-800">{deletingId}</span> is permanent and cannot be undone. Please enter the administrator password to authorize deletion.
+                        </p>
+                    </DialogHeader>
+
+                    <form onSubmit={handleConfirmDelete} className="space-y-4 pt-2">
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                                Admin Password
+                            </Label>
+                            <Input
+                                type="password"
+                                placeholder="Enter admin password"
+                                value={deletePassword}
+                                onChange={(e) => setDeletePassword(e.target.value)}
+                                autoFocus
+                                disabled={isDeleting}
+                                className="h-11 rounded-xl border-slate-200 focus:border-rose-500 focus:ring-rose-500 text-sm"
+                            />
+                        </div>
+
+                        <DialogFooter className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                disabled={isDeleting}
+                                onClick={() => {
+                                    setDeleteModalOpen(false);
+                                    setDeletingId(null);
+                                    setDeletePassword('');
+                                }}
+                                className="h-10 px-5 rounded-xl border-slate-200 text-slate-600 font-bold text-xs uppercase tracking-wider hover:bg-slate-50"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={isDeleting || !deletePassword}
+                                className="h-10 px-6 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase tracking-wider shadow-md shadow-rose-200 transition-all flex items-center gap-2"
+                            >
+                                {isDeleting ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        Deleting...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Trash2 className="w-4 h-4" />
+                                        Delete Quotation
+                                    </>
+                                )}
+                            </Button>
+                        </DialogFooter>
+                    </form>
                 </DialogContent>
             </Dialog>
         </div>

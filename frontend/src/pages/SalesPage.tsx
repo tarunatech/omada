@@ -18,6 +18,7 @@ import { api } from '@/lib/api';
 import { globalSearch } from '@/lib/utils';
 import { Users, User, X as CloseIcon } from 'lucide-react';
 import { CustomPagination } from '@/components/CustomPagination';
+import { useDebounce } from '@/hooks/useDebounce';
 
 const SalesPage = () => {
   const { user } = useAuth();
@@ -27,6 +28,7 @@ const SalesPage = () => {
   const filterUserName = searchParams.get('userName');
   
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 400);
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isViewOnly, setIsViewOnly] = useState(false);
@@ -47,7 +49,8 @@ const SalesPage = () => {
     try {
       setLoading(true);
       const userFilter = filterUserId ? `&createdBy=${filterUserId}` : '';
-      const res = await api.get(`/sales?dept=${activeDept}&page=${currentPage}&limit=${itemsPerPage}&search=${search}${userFilter}`);
+      const searchParam = debouncedSearch.trim() ? `&search=${encodeURIComponent(debouncedSearch.trim())}` : '';
+      const res = await api.get(`/sales?dept=${activeDept}&page=${currentPage}&limit=${itemsPerPage}${searchParam}${userFilter}`);
       const data = res.data || [];
       const pagination = res.pagination || { totalPages: 1, totalCount: 0 };
       
@@ -62,12 +65,14 @@ const SalesPage = () => {
   };
 
   useEffect(() => {
-    fetchRecords();
-  }, [currentPage, search, activeDept]);
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  }, [debouncedSearch, activeDept]);
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [search, activeDept]);
+    fetchRecords();
+  }, [currentPage, debouncedSearch, activeDept, filterUserId]);
   
   useEffect(() => {
     if (user?.selectedDepartment && user.selectedDepartment !== activeDept) {
@@ -117,17 +122,30 @@ const SalesPage = () => {
         activeDept === 'contractors' ? formData.contractorOwnerName :
           formData.customerName;
 
-    if (!nameField) {
+    if (!nameField || !nameField.trim()) {
       toast.error('Please enter the primary name field');
       return;
     }
 
     try {
+      const payload: any = { ...formData, dept: activeDept };
+      for (const k in payload) {
+        if (typeof payload[k] === 'string' && k !== 'date') {
+          payload[k] = payload[k].trim().toUpperCase();
+        }
+      }
+      if (Array.isArray(payload.followUps)) {
+        payload.followUps = payload.followUps.map((f: any) => ({
+          ...f,
+          notes: typeof f.notes === 'string' ? f.notes.trim().toUpperCase() : f.notes
+        }));
+      }
+
       if (editingId) {
-        await api.put(`/sales/${editingId}`, { ...formData, dept: activeDept });
+        await api.put(`/sales/${editingId}`, payload);
         toast.success('Record updated');
       } else {
-        await api.post('/sales', { ...formData, dept: activeDept });
+        await api.post('/sales', payload);
         toast.success('Record saved');
       }
       fetchRecords();
@@ -365,7 +383,22 @@ const SalesPage = () => {
       <div className="flex flex-col sm:flex-row gap-4 items-center mb-8">
         <div className="relative flex-1 w-full max-w-md">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input placeholder="Search by name, contact or Area..." className="pl-11 bg-white border-slate-200 h-12 rounded-2xl shadow-xl shadow-slate-200/40 font-bold" value={search} onChange={e => setSearch(e.target.value)} />
+          <Input
+            placeholder="Search by name, contact or Area..."
+            className="pl-11 pr-10 bg-white border-slate-200 h-12 rounded-2xl shadow-xl shadow-slate-200/40 font-bold"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-lg transition-colors"
+              title="Clear search"
+            >
+              <CloseIcon className="w-4 h-4" />
+            </button>
+          )}
         </div>
         <div className="ml-auto">
           <div className="bg-primary/5 px-4 py-2 rounded-xl flex items-center gap-2 border border-primary/10">

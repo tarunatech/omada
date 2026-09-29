@@ -78,14 +78,22 @@ export const getSalesRecords = async (req: Request, res: Response) => {
 
         const records = dataResult.rows.map(row => {
             const camelRow = mapRowsToCamelCase([row])[0];
+            const upperRow: any = {};
+            for (const k in camelRow) {
+                if (typeof camelRow[k] === 'string' && k !== 'createdAt' && k !== 'updatedAt') {
+                    upperRow[k] = camelRow[k].toUpperCase();
+                } else {
+                    upperRow[k] = camelRow[k];
+                }
+            }
             return {
-                ...camelRow,
+                ...upperRow,
                 lat: row.lat ? parseFloat(row.lat) : null,
                 lng: row.lng ? parseFloat(row.lng) : null,
                 followUps: (row.follow_ups || []).map((f: any) => ({
                     id: f.id,
                     date: f.date,
-                    notes: f.notes,
+                    notes: typeof f.notes === 'string' ? f.notes.toUpperCase() : f.notes,
                     createdAt: f.created_at
                 }))
             };
@@ -151,18 +159,21 @@ export const createSalesRecord = async (req: Request, res: Response) => {
           RETURNING id
         `;
 
+        const toUpper = (val: any) => typeof val === 'string' ? val.trim().toUpperCase() : val;
+
         const recordResult = await client.query(insertRecordQuery, [
-            dept, siteName, firmName,
-            contractorOwnerName, contractorOwnerContact,
-            authorizedPersonName, customerName, customerContact,
-            architectName, architectContact,
-            interiorDesignerName, interiorDesignerContact,
-            structuralEngineerName, structuralEngineerContact,
-            supervisorName, supervisorContact,
-            pmcName, pmcContact,
-            purchasePersonName, purchasePersonContact,
-            contactNumber, anotherName, anotherContact, salesmanName, address, notes, lat, lng,
-            location, architectCompany, interiorCompany, structuralEngineerCompany,
+            toUpper(dept), toUpper(siteName), toUpper(firmName),
+            toUpper(contractorOwnerName), toUpper(contractorOwnerContact),
+            toUpper(authorizedPersonName), toUpper(customerName), toUpper(customerContact),
+            toUpper(architectName), toUpper(architectContact),
+            toUpper(interiorDesignerName), toUpper(interiorDesignerContact),
+            toUpper(structuralEngineerName), toUpper(structuralEngineerContact),
+            toUpper(supervisorName), toUpper(supervisorContact),
+            toUpper(pmcName), toUpper(pmcContact),
+            toUpper(purchasePersonName), toUpper(purchasePersonContact),
+            toUpper(contactNumber), toUpper(anotherName), toUpper(anotherContact), toUpper(salesmanName), 
+            toUpper(address), toUpper(notes), lat, lng,
+            toUpper(location), toUpper(architectCompany), toUpper(interiorCompany), toUpper(structuralEngineerCompany),
             user.id
         ]);
 
@@ -227,18 +238,21 @@ export const updateSalesRecord = async (req: Request, res: Response) => {
           WHERE id = $33 ${user.role !== 'Admin' ? 'AND created_by = $34' : ''}
         `;
 
+        const toUpper = (val: any) => typeof val === 'string' ? val.trim().toUpperCase() : val;
+
         const queryParams = [
-            dept, siteName, firmName,
-            contractorOwnerName, contractorOwnerContact,
-            authorizedPersonName, customerName, customerContact,
-            architectName, architectContact,
-            interiorDesignerName, interiorDesignerContact,
-            structuralEngineerName, structuralEngineerContact,
-            supervisorName, supervisorContact,
-            pmcName, pmcContact,
-            purchasePersonName, purchasePersonContact,
-            contactNumber, anotherName, anotherContact, salesmanName, address, notes, lat, lng,
-            location, architectCompany, interiorCompany, structuralEngineerCompany,
+            toUpper(dept), toUpper(siteName), toUpper(firmName),
+            toUpper(contractorOwnerName), toUpper(contractorOwnerContact),
+            toUpper(authorizedPersonName), toUpper(customerName), toUpper(customerContact),
+            toUpper(architectName), toUpper(architectContact),
+            toUpper(interiorDesignerName), toUpper(interiorDesignerContact),
+            toUpper(structuralEngineerName), toUpper(structuralEngineerContact),
+            toUpper(supervisorName), toUpper(supervisorContact),
+            toUpper(pmcName), toUpper(pmcContact),
+            toUpper(purchasePersonName), toUpper(purchasePersonContact),
+            toUpper(contactNumber), toUpper(anotherName), toUpper(anotherContact), toUpper(salesmanName), 
+            toUpper(address), toUpper(notes), lat, lng,
+            toUpper(location), toUpper(architectCompany), toUpper(interiorCompany), toUpper(structuralEngineerCompany),
             id
         ];
 

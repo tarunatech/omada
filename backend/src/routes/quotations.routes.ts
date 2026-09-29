@@ -1,8 +1,11 @@
 import { Router } from 'express';
-import { getQuotations, createQuotation, updateQuotation, deleteQuotation, updateQuotationStatus } from '../controllers';
+import { getQuotations, createQuotation, updateQuotation, deleteQuotation, updateQuotationStatus, getPublicQuotation } from '../controllers';
 import { auth } from '../middleware/auth';
 
 const router = Router();
+
+// Public route to view quotation
+router.get('/public/:id', getPublicQuotation);
 
 router.use(auth);
 

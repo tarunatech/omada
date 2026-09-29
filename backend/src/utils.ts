@@ -9,16 +9,39 @@ export async function syncProductToMaster(client: PoolClient, item: any, source:
     const design = item.design?.trim();
     const finish = item.finish?.trim() || '';
     const size = item.size?.trim() || '';
+    const weight = item.weight?.trim() || null;
 
     if (company && design) {
-        const upsertResult = await client.query(`
-            INSERT INTO master_products (company, design, finish, size, image)
-            VALUES ($1, $2, $3, $4, $5)
-            ON CONFLICT (company, design, finish, size) 
-            DO UPDATE SET image = COALESCE(master_products.image, EXCLUDED.image)
-            RETURNING id, design
-        `, [company, design, finish, size, item.image]);
-        return upsertResult.rows[0];
+        // Find existing product case-insensitively
+        const findRes = await client.query(`
+            SELECT id, image, weight FROM master_products
+            WHERE LOWER(TRIM(company)) = LOWER($1)
+              AND LOWER(TRIM(design)) = LOWER($2)
+              AND LOWER(TRIM(COALESCE(finish, ''))) = LOWER($3)
+              AND LOWER(TRIM(COALESCE(size, ''))) = LOWER($4)
+            LIMIT 1
+        `, [company, design, finish, size]);
+
+        if (findRes.rows.length > 0) {
+            const existing = findRes.rows[0];
+            const newImage = existing.image || item.image || null;
+            const newWeight = existing.weight || weight || null;
+            if (newImage !== existing.image || newWeight !== existing.weight) {
+                await client.query(`
+                    UPDATE master_products
+                    SET image = $1, weight = $2
+                    WHERE id = $3
+                `, [newImage, newWeight, existing.id]);
+            }
+            return existing;
+        } else {
+            const insertResult = await client.query(`
+                INSERT INTO master_products (company, design, finish, size, weight, image)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                RETURNING id, design
+            `, [company, design, finish, size, weight, item.image || null]);
+            return insertResult.rows[0];
+        }
     }
     return null;
 }

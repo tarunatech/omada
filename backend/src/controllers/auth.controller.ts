@@ -64,6 +64,135 @@ export const deleteUser = async (req: Request, res: Response) => {
     }
 };
 
+export const verifyCurrentPassword = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { currentPassword } = req.body;
+
+        if (!currentPassword) {
+            return res.status(400).json({ valid: false, error: 'Current password is required' });
+        }
+
+        const userRes = await pool.query('SELECT password, plain_password FROM users WHERE id = $1', [id]);
+        if (userRes.rows.length === 0) {
+            return res.status(404).json({ valid: false, error: 'User not found' });
+        }
+
+        const user = userRes.rows[0];
+        let isMatch = false;
+        try {
+            if (user.password) {
+                isMatch = await bcrypt.compare(currentPassword, user.password);
+            }
+        } catch (e) {
+            isMatch = false;
+        }
+
+        if (!isMatch && (user.password === currentPassword || user.plain_password === currentPassword)) {
+            isMatch = true;
+        }
+
+        if (!isMatch) {
+            return res.status(400).json({ valid: false, error: 'Current password does not match' });
+        }
+
+        return res.json({ valid: true, message: 'Current password verified successfully' });
+    } catch (err) {
+        console.error('[AUTH] Verify password error:', err);
+        res.status(500).json({ error: 'Server error verifying password' });
+    }
+};
+
+export const updateUser = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { name, email, role, currentPassword, newPassword } = req.body;
+
+        if (!name || !email) {
+            return res.status(400).json({ error: 'Name and email are required' });
+        }
+
+        // Check if user exists
+        const userRes = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+        if (userRes.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        const user = userRes.rows[0];
+
+        // Check email uniqueness if email is changed
+        const existingEmail = await pool.query(
+            'SELECT id FROM users WHERE LOWER(TRIM(email)) = LOWER(TRIM($1)) AND id != $2',
+            [email, id]
+        );
+        if (existingEmail.rows.length > 0) {
+            return res.status(400).json({ error: 'Email already registered for another employee' });
+        }
+
+        // If new password is provided, verify current password first
+        if (newPassword && typeof newPassword === 'string' && newPassword.trim() !== '') {
+            if (!currentPassword || typeof currentPassword !== 'string' || currentPassword.trim() === '') {
+                return res.status(400).json({ error: 'Current password is required to change password' });
+            }
+
+            let isMatch = false;
+            try {
+                if (user.password) {
+                    isMatch = await bcrypt.compare(currentPassword, user.password);
+                }
+            } catch (e) {
+                isMatch = false;
+            }
+
+            // Fallback for legacy plain text entries
+            if (!isMatch && (user.password === currentPassword || user.plain_password === currentPassword)) {
+                isMatch = true;
+            }
+
+            if (!isMatch) {
+                return res.status(400).json({ error: 'Current password verification failed. Please enter the correct current password.' });
+            }
+
+            // Hash new password
+            const hashedNewPassword = await bcrypt.hash(newPassword.trim(), 10);
+            const plainPassword = newPassword.trim();
+
+            const result = await pool.query(
+                `UPDATE users 
+                 SET name = $1, email = $2, role = $3, password = $4, plain_password = $5 
+                 WHERE id = $6 
+                 RETURNING id, name, email, role, plain_password as "plainPassword", selected_department as "selectedDepartment", created_at as "createdAt"`,
+                [name.trim().toUpperCase(), email.trim().toLowerCase(), role || user.role, hashedNewPassword, plainPassword, id]
+            );
+
+            return res.json({
+                message: 'Employee details and password updated successfully',
+                user: result.rows[0]
+            });
+        } else {
+            // Update details without password modification
+            const result = await pool.query(
+                `UPDATE users 
+                 SET name = $1, email = $2, role = $3 
+                 WHERE id = $4 
+                 RETURNING id, name, email, role, plain_password as "plainPassword", selected_department as "selectedDepartment", created_at as "createdAt"`,
+                [name.trim().toUpperCase(), email.trim().toLowerCase(), role || user.role, id]
+            );
+
+            return res.json({
+                message: 'Employee details updated successfully',
+                user: result.rows[0]
+            });
+        }
+    } catch (err: any) {
+        if (err.code === '23505') {
+            return res.status(400).json({ error: 'Email already exists' });
+        }
+        console.error('[AUTH] Update user error:', err);
+        res.status(500).json({ error: 'Server error updating employee details' });
+    }
+};
+
+
 export const login = async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;

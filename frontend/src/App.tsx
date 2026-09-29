@@ -17,6 +17,7 @@ const SampleManagementPage = lazy(() => import("./pages/SampleManagementPage"));
 const MasterDataPage = lazy(() => import("./pages/MasterDataPage"));
 const UserManagementPage = lazy(() => import("./pages/UserManagementPage"));
 const DepartmentSelectionPage = lazy(() => import("./pages/DepartmentSelectionPage"));
+const PublicQuotationViewPage = lazy(() => import("./pages/PublicQuotationViewPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AppLayout = lazy(() => import("./components/AppLayout"));
 
@@ -51,6 +52,7 @@ const App = () => (
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<LoginRoute />} />
+              <Route path="/view-quotation/:id" element={<PublicQuotationViewPage />} />
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/select-department" element={<DepartmentSelectionPage />} />

@@ -4,7 +4,7 @@ import { syncProductToMaster, updateProductUsage } from '../utils';
 
 export const getQuotations = async (req: Request, res: Response) => {
     try {
-        const { type } = req.query;
+        const { type, status } = req.query;
         const search = (req.query.search as string || '').toLowerCase();
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
@@ -22,6 +22,11 @@ export const getQuotations = async (req: Request, res: Response) => {
             params.push(type);
         }
 
+        if (status && status !== 'All' && status !== 'all') {
+            conditions.push(`LOWER(TRIM(q.status)) = LOWER(TRIM($${params.length + 1}))`);
+            params.push(status);
+        }
+
         if (user.role === 'Admin' && targetUserId) {
             conditions.push(`q.created_by = $${params.length + 1}`);
             params.push(targetUserId);
@@ -35,6 +40,7 @@ export const getQuotations = async (req: Request, res: Response) => {
             conditions.push(`(
                 LOWER(q.customer_name) LIKE $${pIndex} OR 
                 LOWER(q.id) LIKE $${pIndex} OR 
+                LOWER(COALESCE(q.company_name, '')) LIKE $${pIndex} OR 
                 LOWER(q.mobile) LIKE $${pIndex} OR
                 LOWER(COALESCE(q.sales_ref, '')) LIKE $${pIndex} OR
                 LOWER(COALESCE(q.site_address, '')) LIKE $${pIndex} OR
@@ -45,7 +51,8 @@ export const getQuotations = async (req: Request, res: Response) => {
                     WHERE qc.quotation_id = q.id AND (
                         LOWER(qi.design) LIKE $${pIndex} OR
                         LOWER(qi.company) LIKE $${pIndex} OR
-                        LOWER(qi.finish) LIKE $${pIndex}
+                        LOWER(qi.finish) LIKE $${pIndex} OR
+                        LOWER(COALESCE(qi.size, '')) LIKE $${pIndex}
                     )
                 )
             )`);
@@ -86,28 +93,29 @@ export const getQuotations = async (req: Request, res: Response) => {
 
         const records = dataResult.rows.map(row => ({
             id: row.id,
-            customerName: row.customer_name,
-            companyName: row.company_name,
+            customerName: (row.customer_name || '').toUpperCase(),
+            companyName: (row.company_name || '').toUpperCase(),
             mobile: row.mobile,
-            salesRef: row.sales_ref,
+            salesRef: (row.sales_ref || '').toUpperCase(),
             date: row.date,
             grandTotal: parseFloat(row.grand_total || 0),
-            siteAddress: row.site_address,
-            referenceInfo: row.reference_info,
+            siteAddress: (row.site_address || '').toUpperCase(),
+            referenceInfo: (row.reference_info || '').toUpperCase(),
             customerLogo: row.customer_logo,
             status: row.status,
             type: row.type || 'Quotation',
             includeGst: row.include_gst || false,
-            extraTerms: row.extra_terms || '',
+            extraTerms: (row.extra_terms || '').toUpperCase(),
             categories: row.categories.map((cat: any) => ({
                 id: cat.id,
-                name: cat.name,
+                name: (cat.name || '').toUpperCase(),
                 items: (cat.items || []).map((it: any) => ({
                     id: it.id,
-                    company: it.company,
-                    design: it.design,
-                    finish: it.finish,
-                    size: it.size,
+                    company: (it.company || '').toUpperCase(),
+                    design: (it.design || '').toUpperCase(),
+                    finish: (it.finish || '').toUpperCase(),
+                    size: (it.size || '').toUpperCase(),
+                    weight: (it.weight || '').toUpperCase(),
                     multiplier: parseFloat(it.multiplier || 16),
                     qty: parseFloat(it.qty || 0),
                     unitPrice: parseFloat(it.unit_price || 0),
@@ -180,8 +188,20 @@ export const createQuotation = async (req: Request, res: Response) => {
         `;
 
         await client.query(insertQuotationQuery, [
-            finalId, customerName, companyName || '', mobile, salesRef, date, grandTotal,
-            siteAddress, referenceInfo, customerLogo, status, includeGst || false, type || 'Quotation', extraTerms || '',
+            finalId, 
+            customerName?.trim().toUpperCase() || '', 
+            companyName?.trim().toUpperCase() || '', 
+            mobile?.trim() || '', 
+            salesRef?.trim().toUpperCase() || '', 
+            date, 
+            grandTotal,
+            siteAddress?.trim().toUpperCase() || '', 
+            referenceInfo?.trim().toUpperCase() || '', 
+            customerLogo, 
+            status, 
+            includeGst || false, 
+            type || 'Quotation', 
+            extraTerms?.trim().toUpperCase() || '',
             user.id
         ]);
 
@@ -189,33 +209,47 @@ export const createQuotation = async (req: Request, res: Response) => {
             for (const cat of categories) {
                 const catResult = await client.query(
                     'INSERT INTO quotation_categories (quotation_id, name) VALUES ($1, $2) RETURNING id',
-                    [finalId, cat.name]
+                    [finalId, cat.name?.trim().toUpperCase() || '']
                 );
                 const categoryId = catResult.rows[0].id;
 
                 if (cat.items && cat.items.length > 0) {
                     for (const item of cat.items) {
+                        const cleanCompany = item.company?.trim().toUpperCase() || '';
+                        const cleanDesign = item.design?.trim().toUpperCase() || '';
+                        const cleanFinish = item.finish?.trim().toUpperCase() || '';
+                        const cleanSize = item.size?.trim().toUpperCase() || '';
+                        const cleanWeight = item.weight?.trim().toUpperCase() || '';
+
                         await client.query(
                             `INSERT INTO quotation_items (
-                                category_id, company, design, finish, size, multiplier, qty, unit_price, total, image, boxes
-                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+                                category_id, company, design, finish, size, multiplier, qty, unit_price, total, image, boxes, weight
+                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
                             [
                                 categoryId, 
-                                item.company?.trim() || '', 
-                                item.design?.trim() || '', 
-                                item.finish?.trim() || '',
-                                item.size?.trim() || '', 
+                                cleanCompany, 
+                                cleanDesign, 
+                                cleanFinish,
+                                cleanSize, 
                                 item.multiplier || 16, 
                                 item.qty || 0, 
                                 item.unitPrice || 0, 
                                 item.total || 0, 
                                 item.image || null, 
-                                item.boxes || 0
+                                item.boxes || 0,
+                                cleanWeight
                             ]
                         );
 
                         // Auto-save to master_products
-                        await syncProductToMaster(client, item, 'CREATE');
+                        await syncProductToMaster(client, {
+                            ...item,
+                            company: cleanCompany,
+                            design: cleanDesign,
+                            finish: cleanFinish,
+                            size: cleanSize,
+                            weight: cleanWeight
+                        }, 'CREATE');
 
                         // If starting as Final, update usage
                         if (status === 'Final') {
@@ -277,9 +311,21 @@ export const updateQuotation = async (req: Request, res: Response) => {
           WHERE id = $14 ${user.role !== 'Admin' ? 'AND created_by = $15' : ''}
         `;
 
-        const queryParams = [
-            customerName, companyName || '', mobile, salesRef, date, grandTotal,
-            siteAddress, referenceInfo, customerLogo, status, includeGst || false, type || 'Quotation', extraTerms || '', id
+        const queryParams: any[] = [
+            customerName?.trim().toUpperCase() || '', 
+            companyName?.trim().toUpperCase() || '', 
+            mobile?.trim() || '', 
+            salesRef?.trim().toUpperCase() || '', 
+            date, 
+            grandTotal, 
+            siteAddress?.trim().toUpperCase() || '', 
+            referenceInfo?.trim().toUpperCase() || '', 
+            customerLogo, 
+            status, 
+            includeGst || false, 
+            type || 'Quotation', 
+            extraTerms?.trim().toUpperCase() || '', 
+            id
         ];
 
         if (user.role !== 'Admin') {
@@ -300,33 +346,47 @@ export const updateQuotation = async (req: Request, res: Response) => {
             for (const cat of categories) {
                 const catResult = await client.query(
                     'INSERT INTO quotation_categories (quotation_id, name) VALUES ($1, $2) RETURNING id',
-                    [id, cat.name]
+                    [id, cat.name?.trim().toUpperCase() || '']
                 );
                 const categoryId = catResult.rows[0].id;
 
                 if (cat.items && cat.items.length > 0) {
                     for (const item of cat.items) {
+                        const cleanCompany = item.company?.trim().toUpperCase() || '';
+                        const cleanDesign = item.design?.trim().toUpperCase() || '';
+                        const cleanFinish = item.finish?.trim().toUpperCase() || '';
+                        const cleanSize = item.size?.trim().toUpperCase() || '';
+                        const cleanWeight = item.weight?.trim().toUpperCase() || '';
+
                         await client.query(
                             `INSERT INTO quotation_items (
-                                category_id, company, design, finish, size, multiplier, qty, unit_price, total, image, boxes
-                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+                                category_id, company, design, finish, size, multiplier, qty, unit_price, total, image, boxes, weight
+                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
                             [
                                 categoryId, 
-                                item.company?.trim() || '', 
-                                item.design?.trim() || '', 
-                                item.finish?.trim() || '',
-                                item.size?.trim() || '', 
+                                cleanCompany, 
+                                cleanDesign, 
+                                cleanFinish,
+                                cleanSize, 
                                 item.multiplier || 16, 
                                 item.qty || 0, 
                                 item.unitPrice || 0, 
                                 item.total || 0, 
                                 item.image || null, 
-                                item.boxes || 0
+                                item.boxes || 0,
+                                cleanWeight
                             ]
                         );
 
                         // Auto-save to master_products
-                        await syncProductToMaster(client, item, 'UPDATE');
+                        await syncProductToMaster(client, {
+                            ...item,
+                            company: cleanCompany,
+                            design: cleanDesign,
+                            finish: cleanFinish,
+                            size: cleanSize,
+                            weight: cleanWeight
+                        }, 'UPDATE');
 
                         // If new status is Final, update usage with new quantities
                         if (status === 'Final') {
@@ -350,6 +410,12 @@ export const updateQuotation = async (req: Request, res: Response) => {
 
 export const deleteQuotation = async (req: Request, res: Response) => {
     const { id } = req.params;
+    const password = req.headers['x-admin-password'] || req.body?.password || req.query?.password;
+
+    if (password !== 'admin123') {
+        return res.status(403).json({ error: 'Incorrect password. You need authorization to delete a quotation.' });
+    }
+
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
@@ -392,10 +458,8 @@ export const deleteQuotation = async (req: Request, res: Response) => {
         `, [id]);
         await client.query('DELETE FROM quotation_categories WHERE quotation_id = $1', [id]);
 
-        const user = (req as any).user;
-        const deleteQuery = `DELETE FROM quotations WHERE id = $1 ${user.role !== 'Admin' ? 'AND created_by = $2' : ''}`;
-        const deleteParams = user.role !== 'Admin' ? [id, user.id] : [id];
-        const result = await client.query(deleteQuery, deleteParams);
+        const deleteQuery = `DELETE FROM quotations WHERE id = $1`;
+        const result = await client.query(deleteQuery, [id]);
 
         if (result.rowCount === 0) {
             await client.query('ROLLBACK');
@@ -479,6 +543,74 @@ export const updateQuotationStatus = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Server error' });
     } finally {
         client.release();
+    }
+};
+
+export const getPublicQuotation = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const queryStr = `
+            SELECT q.*, 
+            COALESCE(
+              (SELECT json_agg(json_build_object(
+                'id', c.id,
+                'name', c.name,
+                'items', COALESCE(
+                  (SELECT json_agg(i) FROM quotation_items i WHERE i.category_id = c.id),
+                  '[]'
+                )
+              )) FROM quotation_categories c WHERE c.quotation_id = q.id),
+              '[]'
+            ) as categories
+            FROM quotations q
+            WHERE LOWER(TRIM(q.id)) = LOWER(TRIM($1))
+        `;
+
+        const result = await pool.query(queryStr, [id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Quotation not found' });
+        }
+
+        const row = result.rows[0];
+        const record = {
+            id: row.id,
+            customerName: (row.customer_name || '').toUpperCase(),
+            companyName: (row.company_name || '').toUpperCase(),
+            mobile: row.mobile,
+            salesRef: (row.sales_ref || '').toUpperCase(),
+            date: row.date,
+            grandTotal: parseFloat(row.grand_total || 0),
+            siteAddress: (row.site_address || '').toUpperCase(),
+            referenceInfo: (row.reference_info || '').toUpperCase(),
+            customerLogo: row.customer_logo,
+            status: row.status,
+            includeGst: row.include_gst || false,
+            extraTerms: row.extra_terms || '',
+            categories: (row.categories || []).map((cat: any) => ({
+                id: cat.id,
+                name: (cat.name || '').toUpperCase(),
+                items: (cat.items || []).map((it: any) => ({
+                    id: it.id,
+                    company: (it.company || '').toUpperCase(),
+                    design: (it.design || '').toUpperCase(),
+                    finish: (it.finish || '').toUpperCase(),
+                    size: (it.size || '').toUpperCase(),
+                    weight: (it.weight || '').toUpperCase(),
+                    multiplier: parseFloat(it.multiplier || 16),
+                    qty: parseFloat(it.qty || 0),
+                    unitPrice: parseFloat(it.unit_price ?? it.unitPrice ?? 0),
+                    total: parseFloat(it.total || 0),
+                    image: it.image,
+                    boxes: parseFloat(it.boxes || 0)
+                }))
+            }))
+        };
+
+        res.json(record);
+    } catch (err) {
+        console.error('Error fetching public quotation:', err);
+        res.status(500).json({ error: 'Server error' });
     }
 };
 

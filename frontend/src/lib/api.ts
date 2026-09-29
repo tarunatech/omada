@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const getHeaders = () => {
     const token = localStorage.getItem('omada_token');
@@ -19,7 +19,10 @@ export const api = {
                 localStorage.removeItem('omada_user');
                 window.location.href = '/';
             }
-            if (!response.ok) throw new Error(`API GET error: ${response.status} ${response.statusText}`);
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                throw new Error(errorData?.error || errorData?.message || `API GET error: ${response.status} ${response.statusText}`);
+            }
             return response.json();
         } catch (err) {
             console.error(`Fetch error for GET ${API_BASE_URL}${endpoint}:`, err);
@@ -38,7 +41,10 @@ export const api = {
             localStorage.removeItem('omada_user');
             window.location.href = '/';
         }
-        if (!response.ok) throw new Error('API error');
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.error || errorData?.message || 'API error');
+        }
         return response.json();
     },
 
@@ -53,7 +59,10 @@ export const api = {
             localStorage.removeItem('omada_user');
             window.location.href = '/';
         }
-        if (!response.ok) throw new Error('API error');
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.error || errorData?.message || 'API error');
+        }
         return response.json();
     },
 
@@ -68,21 +77,31 @@ export const api = {
             localStorage.removeItem('omada_user');
             window.location.href = '/';
         }
-        if (!response.ok) throw new Error('API error');
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.error || errorData?.message || 'API error');
+        }
         return response.json();
     },
 
-    async delete(endpoint: string) {
+    async delete(endpoint: string, options?: { headers?: Record<string, string>; data?: any }) {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             method: 'DELETE',
-            headers: getHeaders(),
+            headers: {
+                ...getHeaders(),
+                ...(options?.headers || {})
+            },
+            body: options?.data ? JSON.stringify(options.data) : undefined,
         });
         if (response.status === 401) {
             localStorage.removeItem('omada_token');
             localStorage.removeItem('omada_user');
             window.location.href = '/';
         }
-        if (!response.ok) throw new Error('API error');
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.error || errorData?.message || 'API error');
+        }
         return response.json();
     },
 };
