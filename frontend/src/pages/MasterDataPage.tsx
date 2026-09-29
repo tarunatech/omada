@@ -21,9 +21,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { CustomPagination } from '@/components/CustomPagination';
+import { useDebounce } from '@/hooks/useDebounce';
 
 const MasterDataPage = () => {
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 400);
   const [companies, setCompanies] = useState<any[]>([]);
   const [designs, setDesigns] = useState<any[]>([]);
   const [bestDesigns, setBestDesigns] = useState<any[]>([]);
@@ -48,7 +50,7 @@ const MasterDataPage = () => {
 
   // Form states
   const [companyForm, setCompanyForm] = useState({ name: '', type: '', contact: '', status: 'Active' });
-  const [designForm, setDesignForm] = useState({ company: '', design: '', finish: '', size: '', image: null as string | null });
+  const [designForm, setDesignForm] = useState({ company: '', design: '', finish: '', size: '', weight: '', image: null as string | null });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchOrderRecords = async () => {
@@ -72,10 +74,12 @@ const MasterDataPage = () => {
   const fetchDesigns = async () => {
     setLoading(true);
     try {
-      const url = `/master/products?page=${currentDesignPage}&limit=${itemsPerPage}&search=${search}&company=${selectedCompany === 'all' ? '' : selectedCompany}&sortBy=id&order=DESC`;
+      const searchParam = debouncedSearch.trim() ? `&search=${encodeURIComponent(debouncedSearch.trim())}` : '';
+      const companyParam = selectedCompany && selectedCompany !== 'all' ? `&company=${encodeURIComponent(selectedCompany)}` : '';
+      const url = `/master/products?page=${currentDesignPage}&limit=${itemsPerPage}${searchParam}${companyParam}&sortBy=id&order=DESC`;
       const res = await api.get(url);
       setDesigns(res.data || []);
-      setTotalDesignPages(res.pagination.totalPages || 1);
+      setTotalDesignPages(res.pagination?.totalPages || 1);
     } catch (err) {
       toast.error('Failed to fetch designs');
     } finally {
@@ -85,10 +89,11 @@ const MasterDataPage = () => {
 
   const fetchBestDesigns = async () => {
     try {
-      const url = `/master/products?sortBy=usage&page=${currentBestPage}&limit=${itemsPerPage}&search=${search}`;
+      const searchParam = debouncedSearch.trim() ? `&search=${encodeURIComponent(debouncedSearch.trim())}` : '';
+      const url = `/master/products?sortBy=usage&page=${currentBestPage}&limit=${itemsPerPage}${searchParam}`;
       const res = await api.get(url);
       setBestDesigns(res.data || []);
-      setTotalBestPages(res.pagination.totalPages || 1);
+      setTotalBestPages(res.pagination?.totalPages || 1);
     } catch (err) {
       console.error('Failed to fetch best designs', err);
     }
@@ -99,20 +104,22 @@ const MasterDataPage = () => {
     fetchOrderRecords();
   }, []);
 
-
+  useEffect(() => {
+    if (currentDesignPage !== 1) {
+      setCurrentDesignPage(1);
+    }
+    if (currentBestPage !== 1) {
+      setCurrentBestPage(1);
+    }
+  }, [debouncedSearch, selectedCompany]);
 
   useEffect(() => {
     fetchDesigns();
-  }, [currentDesignPage, search, selectedCompany]);
+  }, [currentDesignPage, debouncedSearch, selectedCompany]);
 
   useEffect(() => {
     fetchBestDesigns();
-  }, [currentBestPage, search]);
-
-  useEffect(() => {
-    setCurrentDesignPage(1);
-    setCurrentBestPage(1);
-  }, [search, selectedCompany]);
+  }, [currentBestPage, debouncedSearch]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -126,47 +133,93 @@ const MasterDataPage = () => {
   };
 
   const saveCompany = async () => {
-    if (!companyForm.name) {
+    const cleanName = companyForm.name.trim();
+    if (!cleanName) {
       toast.error('Company name is required');
       return;
     }
+
+    // Client-side instant duplicate check
+    const isDuplicate = companies.some(c => 
+      c.name.toLowerCase().trim() === cleanName.toLowerCase() && 
+      (!editingItem || c.id !== editingItem.id)
+    );
+    if (isDuplicate) {
+      toast.error(`Company "${cleanName}" already exists in Master Data.`);
+      return;
+    }
+
     try {
+      const payload = {
+        ...companyForm,
+        name: cleanName,
+        type: companyForm.type?.trim() || '',
+        contact: companyForm.contact?.trim() || ''
+      };
       if (editingItem) {
-        await api.put(`/master/companies/${editingItem.id}`, companyForm);
+        await api.put(`/master/companies/${editingItem.id}`, payload);
         toast.success('Company updated');
       } else {
-        await api.post('/master/companies', companyForm);
+        await api.post('/master/companies', payload);
         toast.success('Company created');
       }
       setCompanyModalOpen(false);
       setEditingItem(null);
       setCompanyForm({ name: '', type: '', contact: '', status: 'Active' });
       fetchCompanies();
-    } catch (err) {
-      toast.error('Failed to save company');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to save company');
     }
   };
 
   const saveDesign = async () => {
-    if (!designForm.company || !designForm.design) {
+    const cleanCompany = designForm.company.trim();
+    const cleanDesign = designForm.design.trim();
+    const cleanFinish = (designForm.finish || '').trim();
+    const cleanSize = (designForm.size || '').trim();
+    const cleanWeight = (designForm.weight || '').trim();
+
+    if (!cleanCompany || !cleanDesign) {
       toast.error('Company and Design name are required');
       return;
     }
+
+    // Client-side instant duplicate check across loaded designs
+    const isDuplicate = designs.some(d => 
+      d.company.toLowerCase().trim() === cleanCompany.toLowerCase() &&
+      d.design.toLowerCase().trim() === cleanDesign.toLowerCase() &&
+      (d.finish || '').toLowerCase().trim() === cleanFinish.toLowerCase() &&
+      (d.size || '').toLowerCase().trim() === cleanSize.toLowerCase() &&
+      (!editingItem || d.id !== editingItem.id)
+    );
+    if (isDuplicate) {
+      toast.error(`This specification (${cleanCompany} - ${cleanDesign}${cleanSize ? ` • ${cleanSize}` : ''}${cleanFinish ? ` • ${cleanFinish}` : ''}) already exists in Master Data.`);
+      return;
+    }
+
     try {
+      const payload = {
+        company: cleanCompany,
+        design: cleanDesign,
+        finish: cleanFinish,
+        size: cleanSize,
+        weight: cleanWeight,
+        image: designForm.image
+      };
       if (editingItem) {
-        await api.put(`/master/products/${editingItem.id}`, designForm);
+        await api.put(`/master/products/${editingItem.id}`, payload);
         toast.success('Design updated');
       } else {
-        await api.post('/master/products', designForm);
+        await api.post('/master/products', payload);
         toast.success('Design created');
       }
       setDesignModalOpen(false);
       setEditingItem(null);
-      setDesignForm({ company: '', design: '', finish: '', size: '', image: null });
+      setDesignForm({ company: '', design: '', finish: '', size: '', weight: '', image: null });
       fetchDesigns();
       fetchBestDesigns();
-    } catch (err) {
-      toast.error('Failed to save design');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to save design');
     }
   };
 
@@ -240,14 +293,20 @@ const MasterDataPage = () => {
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <Input
                     placeholder="Search design repository..."
-                    className="pl-11 bg-white border-slate-200 h-12 rounded-xl focus-visible:ring-primary/20 shadow-sm font-bold"
+                    className="pl-11 pr-10 bg-white border-slate-200 h-12 rounded-xl focus-visible:ring-primary/20 shadow-sm font-bold"
                     value={search}
-                    onChange={e => {
-                      setSearch(e.target.value);
-                      setCurrentDesignPage(1);
-                      setCurrentBestPage(1);
-                    }}
+                    onChange={e => setSearch(e.target.value)}
                   />
+                  {search && (
+                    <button
+                      type="button"
+                      onClick={() => setSearch('')}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-lg transition-colors"
+                      title="Clear search"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
                 <Select value={selectedCompany} onValueChange={v => {
                   setSelectedCompany(v);
@@ -264,61 +323,83 @@ const MasterDataPage = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={() => { setEditingItem(null); setDesignForm({ company: '', design: '', finish: '', size: '', image: null }); setDesignModalOpen(true); }} className="h-12 px-8 rounded-xl bg-slate-900 border-2 border-slate-900 text-white shadow-lg shadow-slate-200 hover:bg-slate-800 transition-all font-black uppercase tracking-widest text-[12px]">
+              <Button onClick={() => { setEditingItem(null); setDesignForm({ company: '', design: '', finish: '', size: '', weight: '', image: null }); setDesignModalOpen(true); }} className="h-12 px-8 rounded-xl bg-slate-900 border-2 border-slate-900 text-white shadow-lg shadow-slate-200 hover:bg-slate-800 transition-all font-black uppercase tracking-widest text-[12px]">
                 <Plus className="w-5 h-5 mr-2" /> ADD NEW SPECIFICATION
               </Button>
             </div>
             <div className="p-8 sm:p-10">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
-                {designs.map(d => (
-                  <div key={d.id} className="group relative bg-white border border-slate-100 rounded-[40px] overflow-hidden hover:shadow-2xl hover:shadow-slate-200/60 transition-all duration-500 hover:-translate-y-2 flex flex-col">
-                    <div className="aspect-[5/4] relative overflow-hidden bg-slate-50">
-                      {d.image ? (
-                        <img src={d.image} alt={d.design} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
-                      ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center text-slate-200">
-                          <Package className="w-12 h-12 mb-3 opacity-20" />
-                          <span className="text-[10px] uppercase font-black tracking-[0.2em]">Asset Pending</span>
-                        </div>
-                      )}
-
-                      <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center p-6 backdrop-blur-[2px]">
-                        <div className="flex gap-3">
-                          <Button size="icon" className="h-12 w-12 rounded-2xl bg-white text-slate-900 border-none hover:bg-slate-900 hover:text-white shadow-xl transition-all" onClick={() => { setViewingItem(d); setViewDetailsOpen(true); }}>
-                            <Eye className="w-5 h-5" />
-                          </Button>
-                          <Button size="icon" className="h-12 w-12 rounded-2xl bg-white text-slate-900 border-none hover:bg-slate-900 hover:text-white shadow-xl transition-all" onClick={() => { setEditingItem(d); setDesignForm({ company: d.company, design: d.design, finish: d.finish || '', size: d.size || '', image: d.image }); setDesignModalOpen(true); }}>
-                            <Pencil className="w-5 h-5" />
-                          </Button>
-                          <Button size="icon" variant="destructive" className="h-12 w-12 rounded-2xl bg-white text-red-600 border-none hover:bg-red-600 hover:text-white shadow-xl transition-all" onClick={() => removeDesign(d.id)}>
-                            <Trash2 className="w-5 h-5" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="p-8 flex flex-col flex-1">
-                      <div className="flex items-center justify-between mb-6">
-                        <span className="text-[12px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-4 py-1.5 rounded-xl border border-blue-100">{d.company}</span>
-                        <div className="flex items-center gap-2 text-slate-400">
-                          <Tag className="w-4 h-4" />
-                          <span className="text-[13px] font-bold tracking-tight text-slate-500">{d.size}</span>
-                        </div>
-                      </div>
-
-                      <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter group-hover:text-blue-600 transition-colors duration-300 leading-none mb-8 line-clamp-1">{d.design}</h3>
-
-                      <div className="mt-auto flex items-center justify-between bg-slate-950/[0.03] px-6 py-4 rounded-2xl border border-slate-950/[0.05]">
-                        <span className="text-[12px] text-slate-600 font-bold uppercase tracking-widest">{d.finish || 'Standard'}</span>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-                          <span className="text-[11px] font-black uppercase text-emerald-600 tracking-[0.2em]">Active</span>
-                        </div>
-                      </div>
-                    </div>
+              {loading ? (
+                <div className="py-24 text-center">
+                  <div className="flex items-center justify-center gap-2 text-slate-400">
+                    <Loader2 className="w-6 h-6 animate-spin text-slate-900" />
+                    <span className="font-semibold text-sm">Searching designs...</span>
                   </div>
-                ))}
-              </div>
+                </div>
+              ) : designs.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+                  {designs.map(d => (
+                    <div key={d.id} className="group relative bg-white border border-slate-100 rounded-[40px] overflow-hidden hover:shadow-2xl hover:shadow-slate-200/60 transition-all duration-500 hover:-translate-y-2 flex flex-col">
+                      <div className="aspect-[5/4] relative overflow-hidden bg-slate-50">
+                        {d.image ? (
+                          <img src={d.image} alt={d.design} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-slate-200">
+                            <Package className="w-12 h-12 mb-3 opacity-20" />
+                            <span className="text-[10px] uppercase font-black tracking-[0.2em]">Asset Pending</span>
+                          </div>
+                        )}
+
+                        <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center p-6 backdrop-blur-[2px]">
+                          <div className="flex gap-3">
+                            <Button size="icon" className="h-12 w-12 rounded-2xl bg-white text-slate-900 border-none hover:bg-slate-900 hover:text-white shadow-xl transition-all" onClick={() => { setViewingItem(d); setViewDetailsOpen(true); }}>
+                              <Eye className="w-5 h-5" />
+                            </Button>
+                            <Button size="icon" className="h-12 w-12 rounded-2xl bg-white text-slate-900 border-none hover:bg-slate-900 hover:text-white shadow-xl transition-all" onClick={() => { setEditingItem(d); setDesignForm({ company: d.company, design: d.design, finish: d.finish || '', size: d.size || '', weight: d.weight || '', image: d.image }); setDesignModalOpen(true); }}>
+                              <Pencil className="w-5 h-5" />
+                            </Button>
+                            <Button size="icon" variant="destructive" className="h-12 w-12 rounded-2xl bg-white text-red-600 border-none hover:bg-red-600 hover:text-white shadow-xl transition-all" onClick={() => removeDesign(d.id)}>
+                              <Trash2 className="w-5 h-5" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-8 flex flex-col flex-1">
+                        <div className="flex items-center justify-between mb-6">
+                          <span className="text-[12px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-4 py-1.5 rounded-xl border border-blue-100">{d.company}</span>
+                          <div className="flex items-center gap-2 text-slate-400">
+                            <Tag className="w-4 h-4" />
+                            <span className="text-[13px] font-bold tracking-tight text-slate-500">{d.size}</span>
+                          </div>
+                        </div>
+
+                        <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter group-hover:text-blue-600 transition-colors duration-300 leading-none mb-6 line-clamp-1">{d.design}</h3>
+
+                        {d.weight && (
+                          <div className="mb-4">
+                            <span className="text-[11px] font-black uppercase tracking-wider text-slate-600 bg-slate-100 px-3 py-1 rounded-lg">
+                              ⚖️ {d.weight}
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="mt-auto flex items-center justify-between bg-slate-950/[0.03] px-6 py-4 rounded-2xl border border-slate-950/[0.05]">
+                          <span className="text-[12px] text-slate-600 font-bold uppercase tracking-widest">{d.finish || 'Standard'}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                            <span className="text-[11px] font-black uppercase text-emerald-600 tracking-[0.2em]">Active</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-24 text-center">
+                  <Package className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No specifications match your criteria</p>
+                </div>
+              )}
               
               <CustomPagination
                 currentPage={currentDesignPage}
@@ -626,6 +707,16 @@ const MasterDataPage = () => {
                     />
                   </div>
                 </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Weight / Unit</Label>
+                  <Input
+                    value={designForm.weight}
+                    onChange={e => setDesignForm({ ...designForm, weight: e.target.value })}
+                    placeholder="e.g. 30 kg / Box"
+                    className="h-12 bg-slate-50 border-none rounded-xl font-bold"
+                  />
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -719,11 +810,18 @@ const MasterDataPage = () => {
                     </p>
                     <p className="text-2xl font-black text-slate-950 uppercase tracking-tight">{viewingItem?.finish || 'Standard'}</p>
                   </div>
+
+                  <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm group transition-all duration-300 hover:border-primary/30 text-left">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <Tag className="w-3.5 h-3.5 text-primary" /> Weight
+                    </p>
+                    <p className="text-2xl font-black text-slate-950 uppercase tracking-tight">{viewingItem?.weight || 'N/A'}</p>
+                  </div>
                 </div>
               </div>
 
               <div className="pt-8 mt-auto flex gap-3">
-                <Button className="flex-1 h-12 rounded-xl bg-slate-900 text-white font-black uppercase tracking-widest text-[11px] shadow-xl hover:bg-slate-800 transition-all" onClick={() => { setViewDetailsOpen(false); setEditingItem(viewingItem); setDesignForm({ company: viewingItem.company, design: viewingItem.design, finish: viewingItem.finish || '', size: viewingItem.size || '', image: viewingItem.image }); setDesignModalOpen(true); }}>
+                <Button className="flex-1 h-12 rounded-xl bg-slate-900 text-white font-black uppercase tracking-widest text-[11px] shadow-xl hover:bg-slate-800 transition-all" onClick={() => { setViewDetailsOpen(false); setEditingItem(viewingItem); setDesignForm({ company: viewingItem.company, design: viewingItem.design, finish: viewingItem.finish || '', size: viewingItem.size || '', weight: viewingItem.weight || '', image: viewingItem.image }); setDesignModalOpen(true); }}>
                   <Pencil className="w-4 h-4 mr-2" /> Modify details
                 </Button>
               </div>

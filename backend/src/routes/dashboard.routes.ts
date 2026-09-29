@@ -25,18 +25,18 @@ router.get('/', auth, async (req, res) => {
             ],
             recentQuotations: recentQuotationsResult.rows.map(q => ({
                 id: q.id,
-                customer: q.customer,
+                customer: (q.customer || '').toUpperCase(),
                 amount: `₹${parseFloat(q.amount || 0).toLocaleString()}`,
                 date: q.date,
-                status: q.status === 'Final' ? 'Confirmed' : q.status
+                status: (q.status === 'Final' ? 'Confirmed' : q.status).toUpperCase()
             })),
             recentSales: recentSalesResult.rows.map(s => ({
                 id: s.id.toString(),
-                party: s.site_name || s.firm_name || s.contractor_owner_name,
-                department: s.department,
-                contact: s.contact_number,
+                party: (s.site_name || s.firm_name || s.contractor_owner_name || '').toUpperCase(),
+                department: (s.department || '').toUpperCase(),
+                contact: (s.contact_number || '').toUpperCase(),
                 date: new Date(s.date).toISOString().split('T')[0],
-                status: 'New'
+                status: 'NEW'
             }))
         });
     } catch (err) {

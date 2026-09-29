@@ -109,6 +109,7 @@ CREATE TABLE IF NOT EXISTS quotation_items (
     design VARCHAR(255),
     finish VARCHAR(100),
     size VARCHAR(100),
+    weight VARCHAR(100),
     multiplier DECIMAL(10, 2) DEFAULT 16,
     qty DECIMAL(10, 2) DEFAULT 0,
     unit_price DECIMAL(15, 2) DEFAULT 0,
@@ -131,6 +132,7 @@ CREATE TABLE IF NOT EXISTS master_products (
     design VARCHAR(255) NOT NULL,
     finish VARCHAR(100),
     size VARCHAR(100),
+    weight VARCHAR(100),
     image TEXT, -- Base64
     total_quantity_used DECIMAL(15, 2) DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
