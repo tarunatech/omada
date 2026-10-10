@@ -145,6 +145,7 @@ const QuotationPage = () => {
     const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Final'>('All');
     const [loading, setLoading] = useState(true);
     const [records, setRecords] = useState<QuotationRecord[]>([]);
+    const [isSaving, setIsSaving] = useState(false);
 
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -404,6 +405,8 @@ const QuotationPage = () => {
     const roundOffValue = Number((finalTotalValue - rawTotalValue).toFixed(2));
 
     const handleSave = async () => {
+        if (isSaving) return;
+        setIsSaving(true);
         const newRecord: QuotationRecord = {
             id: editingId || `Q-${1000 + records.length + 1}`,
             customerName: customerName.trim().toUpperCase(),
@@ -447,8 +450,11 @@ const QuotationPage = () => {
             fetchMasterData();
             setView('list');
             resetForm();
-        } catch (err) {
-            toast.error('Failed to save quotation');
+        } catch (err: any) {
+            const errorMsg = err?.response?.data?.error || err?.message || 'Failed to save quotation';
+            toast.error(errorMsg);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -1497,8 +1503,13 @@ const QuotationPage = () => {
                                 <Eye className="w-4 h-4 mr-2" /> {showPreview ? 'Deactivate Live Lens' : 'Activate Live Lens'}
                             </Button>
                             {view !== 'view' && (
-                                <Button className="h-12 px-8 rounded-2xl bg-blue-600 text-white font-black uppercase tracking-widest text-[13px] shadow-xl shadow-blue-200/50" onClick={() => handleSave()}>
-                                    <Save className="w-4 h-4 mr-2" /> SAVE NOW
+                                <Button 
+                                    disabled={isSaving}
+                                    className="h-12 px-8 rounded-2xl bg-blue-600 text-white font-black uppercase tracking-widest text-[13px] shadow-xl shadow-blue-200/50 disabled:opacity-60" 
+                                    onClick={() => handleSave()}
+                                >
+                                    {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                                    {isSaving ? 'SAVING...' : 'SAVE NOW'}
                                 </Button>
                             )}
                         </div>
@@ -2064,7 +2075,15 @@ const QuotationPage = () => {
                                             </>
                                         ) : (
                                             <>
-                                                <Button type="button" className="h-11 px-8 font-bold shadow-md shadow-primary/20 relative z-[110]" onClick={() => { console.log('Save clicked'); handleSave(); }}><Save className="w-4 h-4 mr-2" /> Save Quotation</Button>
+                                                <Button 
+                                                    type="button" 
+                                                    disabled={isSaving}
+                                                    className="h-11 px-8 font-bold shadow-md shadow-primary/20 relative z-[110] disabled:opacity-60" 
+                                                    onClick={() => { console.log('Save clicked'); handleSave(); }}
+                                                >
+                                                    {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                                                    {isSaving ? 'Saving...' : 'Save Quotation'}
+                                                </Button>
                                                 <Button type="button" variant="outline" className="h-11 px-6 text-[#64748b] font-semibold relative z-[110]" onClick={() => { console.log('Cancel clicked'); setView('list'); }}>Cancel</Button>
                                             </>
                                         )}

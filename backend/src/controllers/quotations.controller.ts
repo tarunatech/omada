@@ -262,10 +262,10 @@ export const createQuotation = async (req: Request, res: Response) => {
 
         await client.query('COMMIT');
         res.status(201).json({ id: finalId, message: 'Quotation created' });
-    } catch (err) {
+    } catch (err: any) {
         await client.query('ROLLBACK');
         console.error('[CREATE QUOTATION] Error:', err);
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: err?.message || 'Failed to save quotation on server' });
     } finally {
         client.release();
     }
@@ -399,10 +399,10 @@ export const updateQuotation = async (req: Request, res: Response) => {
 
         await client.query('COMMIT');
         res.json({ message: 'Quotation updated' });
-    } catch (err) {
+    } catch (err: any) {
         await client.query('ROLLBACK');
         console.error('[UPDATE QUOTATION] Error:', err);
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: err?.message || 'Failed to update quotation on server' });
     } finally {
         client.release();
     }

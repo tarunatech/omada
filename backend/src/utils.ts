@@ -35,12 +35,23 @@ export async function syncProductToMaster(client: PoolClient, item: any, source:
             }
             return existing;
         } else {
-            const insertResult = await client.query(`
-                INSERT INTO master_products (company, design, finish, size, weight, image)
-                VALUES ($1, $2, $3, $4, $5, $6)
-                RETURNING id, design
-            `, [company, design, finish, size, weight, item.image || null]);
-            return insertResult.rows[0];
+            await client.query('SAVEPOINT master_product_sync');
+            try {
+                const insertResult = await client.query(`
+                    INSERT INTO master_products (company, design, finish, size, weight, image)
+                    VALUES ($1, $2, $3, $4, $5, $6)
+                    RETURNING id, design
+                `, [company, design, finish, size, weight, item.image || null]);
+                await client.query('RELEASE SAVEPOINT master_product_sync');
+                return insertResult.rows[0];
+            } catch (err: any) {
+                if (err.code === '23505') {
+                    // Product already exists in master_products - roll back savepoint and keep existing record
+                    await client.query('ROLLBACK TO SAVEPOINT master_product_sync');
+                    return null;
+                }
+                throw err;
+            }
         }
     }
     return null;
