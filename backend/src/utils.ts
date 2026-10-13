@@ -5,11 +5,11 @@ import { PoolClient } from 'pg';
  * If the product exists, it updates the image if not already set.
  */
 export async function syncProductToMaster(client: PoolClient, item: any, source: string) {
-    const company = item.company?.trim();
-    const design = item.design?.trim();
-    const finish = item.finish?.trim() || '';
-    const size = item.size?.trim() || '';
-    const weight = item.weight?.trim() || null;
+    const company = item.company?.trim().replace(/\s+/g, ' ');
+    const design = item.design?.trim().replace(/\s+/g, ' ');
+    const finish = (item.finish || '').trim().replace(/\s+/g, ' ');
+    const size = (item.size || '').trim().replace(/\s+/g, ' ');
+    const weight = item.weight?.trim().replace(/\s+/g, ' ') || null;
 
     if (company && design) {
         // Find existing product case-insensitively
