@@ -14,7 +14,7 @@ export const getSalesRecords = async (req: Request, res: Response) => {
         const rawCreatedBy = req.query.createdBy as string;
         const targetUserId = (rawCreatedBy === 'undefined' || isNaN(parseInt(rawCreatedBy))) ? null : parseInt(rawCreatedBy);
         
-        let whereClause = dept ? 'WHERE dept = $1' : '';
+        let whereClause = dept ? 'WHERE LOWER(dept) = LOWER($1)' : '';
         const params: any[] = dept ? [dept] : [];
 
         // RBAC: Admins can filter by user, others only see their own
@@ -88,6 +88,7 @@ export const getSalesRecords = async (req: Request, res: Response) => {
             }
             return {
                 ...upperRow,
+                dept: row.dept ? row.dept.toLowerCase() : row.dept,
                 lat: row.lat ? parseFloat(row.lat) : null,
                 lng: row.lng ? parseFloat(row.lng) : null,
                 followUps: (row.follow_ups || []).map((f: any) => ({
@@ -133,8 +134,8 @@ export const createSalesRecord = async (req: Request, res: Response) => {
             followUps
         } = req.body;
 
-        if (!dept || (!siteName && !firmName && !customerName)) {
-            return res.status(400).json({ error: 'Dept and at least one identifying name (Site, Firm, or Customer) are required' });
+        if (!dept || (!siteName && !firmName && !customerName && !contractorOwnerName)) {
+            return res.status(400).json({ error: 'Dept and at least one identifying name (Site, Firm, Contractor/Owner, or Customer) are required' });
         }
 
         await client.query('BEGIN');
@@ -160,9 +161,10 @@ export const createSalesRecord = async (req: Request, res: Response) => {
         `;
 
         const toUpper = (val: any) => typeof val === 'string' ? val.trim().toUpperCase() : val;
+        const normalizedDept = typeof dept === 'string' ? dept.trim().toLowerCase() : dept;
 
         const recordResult = await client.query(insertRecordQuery, [
-            toUpper(dept), toUpper(siteName), toUpper(firmName),
+            normalizedDept, toUpper(siteName), toUpper(firmName),
             toUpper(contractorOwnerName), toUpper(contractorOwnerContact),
             toUpper(authorizedPersonName), toUpper(customerName), toUpper(customerContact),
             toUpper(architectName), toUpper(architectContact),
@@ -239,9 +241,10 @@ export const updateSalesRecord = async (req: Request, res: Response) => {
         `;
 
         const toUpper = (val: any) => typeof val === 'string' ? val.trim().toUpperCase() : val;
+        const normalizedDept = typeof dept === 'string' ? dept.trim().toLowerCase() : dept;
 
         const queryParams = [
-            toUpper(dept), toUpper(siteName), toUpper(firmName),
+            normalizedDept, toUpper(siteName), toUpper(firmName),
             toUpper(contractorOwnerName), toUpper(contractorOwnerContact),
             toUpper(authorizedPersonName), toUpper(customerName), toUpper(customerContact),
             toUpper(architectName), toUpper(architectContact),

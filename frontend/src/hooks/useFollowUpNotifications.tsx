@@ -38,7 +38,7 @@ export const useFollowUpNotifications = () => {
                         if (isSameDay(fuDate, today)) {
                             alerts.push({
                                 id: `${record.id}-${fu.date}`,
-                                clientName: record.siteName || record.firmName || record.contractorOwnerName || 'Client',
+                                clientName: record.siteName || record.firmName || record.contractorOwnerName || record.customerName || 'Client',
                                 dept: record.dept,
                                 notes: fu.notes,
                                 date: fu.date

@@ -130,7 +130,7 @@ const SalesPage = () => {
     try {
       const payload: any = { ...formData, dept: activeDept };
       for (const k in payload) {
-        if (typeof payload[k] === 'string' && k !== 'date') {
+        if (typeof payload[k] === 'string' && k !== 'date' && k !== 'dept') {
           payload[k] = payload[k].trim().toUpperCase();
         }
       }

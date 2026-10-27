@@ -13,7 +13,7 @@ router.get('/', auth, async (req, res) => {
         const salesRecordsResult = await pool.query('SELECT COUNT(*) as count FROM sales_records');
 
         const recentQuotationsResult = await pool.query("SELECT id, customer_name as customer, grand_total as amount, date, status FROM quotations WHERE type = 'Quotation' ORDER BY created_at DESC LIMIT 5");
-        const recentSalesResult = await pool.query('SELECT id, site_name, firm_name, contractor_owner_name, dept as department, contact_number, created_at as date FROM sales_records ORDER BY created_at DESC LIMIT 5');
+        const recentSalesResult = await pool.query('SELECT id, site_name, firm_name, contractor_owner_name, customer_name, dept as department, contact_number, created_at as date FROM sales_records ORDER BY created_at DESC LIMIT 5');
 
         res.json({
             kpis: [
@@ -32,7 +32,7 @@ router.get('/', auth, async (req, res) => {
             })),
             recentSales: recentSalesResult.rows.map(s => ({
                 id: s.id.toString(),
-                party: (s.site_name || s.firm_name || s.contractor_owner_name || '').toUpperCase(),
+                party: (s.site_name || s.firm_name || s.contractor_owner_name || s.customer_name || '').toUpperCase(),
                 department: (s.department || '').toUpperCase(),
                 contact: (s.contact_number || '').toUpperCase(),
                 date: new Date(s.date).toISOString().split('T')[0],
