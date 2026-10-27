@@ -178,7 +178,8 @@ const initDb = async () => {
                 location = UPPER(TRIM(location)),
                 address = UPPER(TRIM(address)),
                 notes = UPPER(TRIM(notes)),
-                salesman_name = UPPER(TRIM(salesman_name))
+                salesman_name = UPPER(TRIM(salesman_name)),
+                dept = LOWER(TRIM(dept))
             WHERE id IS NOT NULL;
         `);
         console.log('Database schema, uniqueness & uppercase normalization verified');
